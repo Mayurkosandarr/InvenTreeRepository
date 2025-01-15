@@ -1,0 +1,1 @@
+import{j as o,i as r}from"./vendor-9x6k4T-r.js";import{I as i}from"./ThemeContext-DRe09WSE.js";import{c as e}from"./UseForm-C7xHtQGh.js";function p({onClick:t,tooltip:n=r._({id:"3mIfxA"})}){return o.jsx(e,{onClick:t,icon:o.jsx(i,{icon:"square_x"}),tooltip:n,tooltipAlignment:"top",color:"red"})}export{p as R};

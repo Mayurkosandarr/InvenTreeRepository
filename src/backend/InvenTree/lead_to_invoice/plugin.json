@@ -1,0 +1,9 @@
+{
+    "name": "LeadToInvoice",
+    "slug": "lead_to_invoice",
+    "description": "Adds a customizable numbering system for leads, quotations, and invoices.",
+    "author": "Mayur Kosandar",
+    "version": "1.0.0",
+    "active": true
+  }
+  

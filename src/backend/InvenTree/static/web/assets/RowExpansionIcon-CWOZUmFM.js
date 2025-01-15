@@ -1,0 +1,1 @@
+import{j as n,bz as r,cj as a,eb as t}from"./vendor-9x6k4T-r.js";function i({enabled:o,expanded:s}){return n.jsx(r,{size:"sm",variant:"transparent",disabled:!o,children:s?n.jsx(a,{}):n.jsx(t,{})})}export{i as R};

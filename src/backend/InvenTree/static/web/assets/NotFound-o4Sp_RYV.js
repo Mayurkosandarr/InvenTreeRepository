@@ -1,0 +1,1 @@
+import{j as r,i as o}from"./vendor-9x6k4T-r.js";import{E as t}from"./GenericErrorPage-C2ho8aty.js";import"./ThemeContext-DRe09WSE.js";import"./index-Bd_yPD7D.js";function a(){return r.jsx(t,{title:o._({id:"boJlGf"}),message:o._({id:"CcD0eu"})})}export{a as default};

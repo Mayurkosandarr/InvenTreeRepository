@@ -1,0 +1,1 @@
+import{b as r}from"./index-Bd_yPD7D.js";function p(a){var i;a==null||a.preventDefault(),a==null||a.stopPropagation(),(i=a==null?void 0:a.nativeEvent)==null||i.stopImmediatePropagation()}const l=(a,i,o)=>{if(p(o),o!=null&&o.ctrlKey||o!=null&&o.shiftKey){const s=`/${r}${a}`;window.open(s,"_blank")}else i(a)};export{p as c,l as n};

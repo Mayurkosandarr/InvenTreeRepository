@@ -1,0 +1,7 @@
+include README.md
+include LICENSE
+recursive-include static *
+recursive-include templates *
+
+include lead_to_invoice/templates/*
+include lead_to_invoice/static/*
