@@ -253,7 +253,7 @@ INSTALLED_APPS = [
     'django.contrib.admin',
     # InvenTree apps
     'lead_to_invoice.apps.LeadToInvoiceConfig',   
-
+    "audit_log.apps.AuditLogConfig",
     'build.apps.BuildConfig',
     'common.apps.CommonConfig',
     'company.apps.CompanyConfig',
@@ -1488,4 +1488,4 @@ REST_FRAMEWORK = {
 
 # settings.py
 CSRF_TRUSTED_ORIGINS = ['http://127.0.0.1:8000']
-CSRF_COOKIE_SECURE = False  # Make sure this is False for local development
+CSRF_COOKIE_SECURE = False  

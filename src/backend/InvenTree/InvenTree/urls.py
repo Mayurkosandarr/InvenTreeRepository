@@ -64,6 +64,7 @@ admin.site.site_header = 'InvenTree Admin'
 apipatterns = [
     # Global search
     path('lead_to_invoice/', include('lead_to_invoice.urls')),
+    path("audit-log/", include("audit_log.urls")),
     path('admin/', include(common.api.admin_api_urls)),
     path('bom/', include(part.api.bom_api_urls)),
     path('build/', include(build.api.build_api_urls)),
@@ -177,9 +178,9 @@ apipatterns = [
         name='sesame-generate',
     ),
     path('email/login/', LoginView.as_view(), name='sesame-login'),
-    # path("token/", TokenObtainPairView.as_view(), name="token_obtain_pair"),
-    # path("token/refresh/", TokenRefreshView.as_view(), name="token_refresh"),
-    # path("token/verify/", TokenVerifyView.as_view(), name="token_verify"),
+    path("token/", TokenObtainPairView.as_view(), name="token_obtain_pair"),
+    path("token/refresh/", TokenRefreshView.as_view(), name="token_refresh"),
+    path("token/verify/", TokenVerifyView.as_view(), name="token_verify"),
     re_path(r'^.*$', NotFoundView.as_view(), name='api-404'),
 ]
 
