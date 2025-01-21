@@ -1,5 +1,5 @@
 from django.urls import path
-from .views import CreateLeadView, CreateQuotationView, CreateInvoiceView, LeadToInvoiceView, NotificationAPI, NumberingSystemSettingsAPI
+from .views import CreateLeadView, CreateQuotationView, CreateInvoiceView, LeadToInvoiceView, NotificationAPI, NumberingSystemSettingsAPI,CreateRevisedQuotationAPI
 
 urlpatterns = [
     path('leads/', CreateLeadView.as_view(), name='create-lead-api'),  # Create lead view
@@ -8,4 +8,7 @@ urlpatterns = [
     path('lead-to-invoice/', LeadToInvoiceView.as_view(), name='lead-to-invoice-api'),  # Lead to invoice view
     path('notifications/', NotificationAPI.as_view(), name='notification-api'),  # Notification view
     path('numbering-system/', NumberingSystemSettingsAPI.as_view(), name='numbering-system-api'),  # Numbering system settings API
+    path('quotations/<int:quotation_id>/revise/', CreateRevisedQuotationAPI.as_view(), name='create-revised-quotation-api'),  # New endpoint
+
 ]
+  

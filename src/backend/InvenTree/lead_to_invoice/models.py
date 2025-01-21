@@ -163,13 +163,38 @@ class Lead(models.Model):
         ]
 
 
+# class Quotation(models.Model):
+#     quotation_number = models.CharField(max_length=50, unique=True, null=True, blank=True)  
+#     lead = models.ForeignKey(Lead, on_delete=models.CASCADE)
+#     total_amount = models.DecimalField(max_digits=10, decimal_places=2)
+#     discount = models.DecimalField(max_digits=5, decimal_places=2, null=True, blank=True)
+#     tax = models.DecimalField(max_digits=5, decimal_places=2, null=True, blank=True)
+#     status = models.CharField(max_length=50, choices=[('draft', 'Draft'), ('sent', 'Sent'), ('accepted', 'Accepted'), ('rejected', 'Rejected')])
+#     created_at = models.DateTimeField(auto_now_add=True)
+#     updated_at = models.DateTimeField(auto_now=True)
+
+#     class Meta:
+#         verbose_name = "Quotation"
+#         verbose_name_plural = "Quotations"
+#         ordering = ['-created_at']  
+#         unique_together = ['quotation_number']  
+#         indexes = [
+#             models.Index(fields=['lead', 'status']),  
+#         ]
+
 class Quotation(models.Model):
     quotation_number = models.CharField(max_length=50, unique=True, null=True, blank=True)  
-    lead = models.ForeignKey(Lead, on_delete=models.CASCADE)
+    lead = models.ForeignKey('Lead', on_delete=models.CASCADE)
+    original_quotation = models.ForeignKey('self', null=True, blank=True, on_delete=models.SET_NULL, related_name='revisions')
+    revision_count = models.PositiveIntegerField(default=0)  # Tracks the revision number
+
     total_amount = models.DecimalField(max_digits=10, decimal_places=2)
     discount = models.DecimalField(max_digits=5, decimal_places=2, null=True, blank=True)
     tax = models.DecimalField(max_digits=5, decimal_places=2, null=True, blank=True)
-    status = models.CharField(max_length=50, choices=[('draft', 'Draft'), ('sent', 'Sent'), ('accepted', 'Accepted'), ('rejected', 'Rejected')])
+    status = models.CharField(
+        max_length=50, 
+        choices=[('draft', 'Draft'), ('sent', 'Sent'), ('accepted', 'Accepted'), ('rejected', 'Rejected')]
+    )
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
@@ -179,8 +204,32 @@ class Quotation(models.Model):
         ordering = ['-created_at']  
         unique_together = ['quotation_number']  
         indexes = [
-            models.Index(fields=['lead', 'status']),  
+            models.Index(fields=['lead', 'status']),
         ]
+
+    def save(self, *args, **kwargs):
+        if not self.quotation_number:
+            if self.original_quotation:
+                # Generate a revised quotation number
+                self.revision_count = self.original_quotation.revisions.count() + 1
+                self.quotation_number = f"{self.original_quotation.quotation_number}.{self.revision_count}"
+            else:
+                # Generate a new quotation number for the original
+                self.quotation_number = self.generate_quotation_number()
+        super().save(*args, **kwargs)
+
+    def generate_quotation_number(self):
+        """
+        Generate a unique quotation number for new quotations.
+        This can be customized based on your system's requirements.
+        """
+        return f"{self.lead.id}-{int(self.created_at.timestamp())}"
+
+    def get_revisions(self):
+        """
+        Get all revisions for this quotation.
+        """
+        return self.revisions.all()
 
 
 class Invoice(models.Model):
@@ -304,3 +353,6 @@ class Notification(models.Model):
         indexes = [
             models.Index(fields=['status']), 
         ]
+
+
+

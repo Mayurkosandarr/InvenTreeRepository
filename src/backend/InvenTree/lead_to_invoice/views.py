@@ -111,11 +111,15 @@
 #         serializer = NumberingSystemSettingsSerializer(settings, many=True)
 #         return Response(serializer.data)
 
+
+from django.shortcuts import get_object_or_404
+from django.http import JsonResponse
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
 from .models import Lead, Quotation, Invoice, NumberingSystemSettings, Notification, LeadToInvoice
 from .serializers import LeadSerializer, QuotationSerializer, InvoiceSerializer, NumberingSystemSettingsSerializer, NotificationSerializer, LeadToInvoiceSerializer
+import re
 
 
 # Function to generate unique numbers based on the numbering system settings
@@ -271,3 +275,71 @@ class NotificationAPI(APIView):
         notifications = Notification.objects.all()
         serializer = NotificationSerializer(notifications, many=True)
         return Response(serializer.data)
+
+# def CreateRevisedQuotationAPI(request, quotation_id):
+#     if request.method != "POST":
+#         return JsonResponse({"error": "Only POST method is allowed."}, status=405)
+
+#     original_quotation = get_object_or_404(Quotation, id=quotation_id)
+
+#     # Generate a new quotation number for the revised quotation
+#     base_quotation_number = original_quotation.quotation_number
+#     revised_quotation_number = base_quotation_number
+
+#     # Check if the revised quotation number already exists
+#     revision_suffix = 1
+#     while Quotation.objects.filter(quotation_number=revised_quotation_number).exists():
+#         revised_quotation_number = f"{base_quotation_number}.{revision_suffix}"
+#         revision_suffix += 1
+
+#     # Create the revised quotation
+#     revised_quotation = Quotation(
+#         lead=original_quotation.lead,
+#         total_amount=original_quotation.total_amount,
+#         discount=original_quotation.discount,
+#         tax=original_quotation.tax,
+#         status='draft',
+#         quotation_number=revised_quotation_number  # Set the new unique quotation number
+#     )
+#     revised_quotation.save()
+
+#     return JsonResponse({
+#         "message": "Revised quotation created successfully.",
+#         "revised_quotation_number": revised_quotation.quotation_number,
+#     })
+
+
+
+class CreateRevisedQuotationAPI(APIView):
+    def post(self, request, quotation_id):
+        # Fetch the original quotation
+        original_quotation = get_object_or_404(Quotation, id=quotation_id)
+
+        # Generate a new quotation number for the revised quotation
+        base_quotation_number = original_quotation.quotation_number
+        revised_quotation_number = base_quotation_number
+
+        # Check if the revised quotation number already exists
+        revision_suffix = 1
+        while Quotation.objects.filter(quotation_number=revised_quotation_number).exists():
+            revised_quotation_number = f"{base_quotation_number}.{revision_suffix}"
+            revision_suffix += 1
+
+        # Create the revised quotation
+        revised_quotation = Quotation(
+            lead=original_quotation.lead,
+            total_amount=original_quotation.total_amount,
+            discount=original_quotation.discount,
+            tax=original_quotation.tax,
+            status='draft',
+            quotation_number=revised_quotation_number  # Set the new unique quotation number
+        )
+
+        try:
+            revised_quotation.save()
+            return Response({
+                "message": "Revised quotation created successfully.",
+                "revised_quotation_number": revised_quotation.quotation_number,
+            }, status=status.HTTP_201_CREATED)  # HTTP 201 Created
+        except Exception as e:
+            return Response({"error": f"An error occurred: {str(e)}"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)

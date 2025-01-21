@@ -82,6 +82,45 @@ class QuotationAdmin(admin.ModelAdmin):
     ordering = ('-created_at',)
     list_editable = ('status',)
 
+# @admin.register(Quotation)
+# class QuotationAdmin(admin.ModelAdmin):
+#     list_display = ('id', 'lead', 'quotation_number', 'original_quotation', 'total_amount', 'status', 'created_at')
+#     search_fields = ('quotation_number', 'lead__name', 'status')
+#     list_filter = ('status', 'lead')
+#     ordering = ('-created_at',)
+#     list_editable = ('status',)
+    
+#     # Adding display for revisions
+#     def original_quotation(self, obj):
+#         """
+#         Display the original quotation (if it exists) in the admin panel.
+#         """
+#         return obj.original_quotation.quotation_number if obj.original_quotation else None
+#     original_quotation.short_description = 'Original Quotation'
+
+#     # Adding a link to revisions
+#     def get_queryset(self, request):
+#         """
+#         Customize the queryset to prefetch related data for better performance.
+#         """
+#         queryset = super().get_queryset(request)
+#         return queryset.select_related('original_quotation', 'lead')
+
+#     # Adding readonly fields for auto-generated data
+#     readonly_fields = ('quotation_number', 'created_at', 'updated_at')
+
+    # Inline view for revisions (optional)
+    class RevisionInline(admin.TabularInline):
+        model = Quotation
+        fk_name = 'original_quotation'
+        fields = ('quotation_number', 'total_amount', 'status', 'created_at')
+        readonly_fields = fields
+        extra = 0
+        can_delete = False
+
+    inlines = [RevisionInline]  # Show revisions inline
+
+
 # Registering Invoice model
 @admin.register(Invoice)
 class InvoiceAdmin(admin.ModelAdmin):

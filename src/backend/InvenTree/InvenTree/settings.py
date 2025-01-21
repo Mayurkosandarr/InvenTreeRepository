@@ -329,6 +329,8 @@ MIDDLEWARE = CONFIG.get(
         'maintenance_mode.middleware.MaintenanceModeMiddleware',
         'InvenTree.middleware.InvenTreeExceptionProcessor',  # Error reporting
         'django_structlog.middlewares.RequestMiddleware',  # Structured logging
+        "audit_log.middleware.AuditLogMiddleware",  # Audit Log Middleware
+ 
     ],
 )
 
@@ -1009,6 +1011,8 @@ EMAIL_USE_LOCALTIME = False
 EMAIL_TIMEOUT = 60
 
 LOCALE_PATHS = (BASE_DIR.joinpath('locale/'),)
+TIME_ZONE = 'Asia/Kolkata'
+USE_TZ = True
 
 TIME_ZONE = get_setting('INVENTREE_TIMEZONE', 'timezone', 'UTC')
 
@@ -1489,3 +1493,5 @@ REST_FRAMEWORK = {
 # settings.py
 CSRF_TRUSTED_ORIGINS = ['http://127.0.0.1:8000']
 CSRF_COOKIE_SECURE = False  
+
+TIME_ZONE = 'Asia/Kolkata'
