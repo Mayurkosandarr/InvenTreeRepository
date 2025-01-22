@@ -15,7 +15,7 @@ class PartParameterInline(admin.TabularInline):
 class PartAdmin(admin.ModelAdmin):
     """Admin class for the Part model."""
 
-    list_display = ('full_name', 'description', 'total_stock', 'category')
+    list_display = ("id",'full_name', 'description', 'total_stock', 'category')
 
     list_filter = ('active', 'assembly', 'is_template', 'virtual')
 

@@ -178,9 +178,9 @@ apipatterns = [
         name='sesame-generate',
     ),
     path('email/login/', LoginView.as_view(), name='sesame-login'),
-    path("token/", TokenObtainPairView.as_view(), name="token_obtain_pair"),
-    path("token/refresh/", TokenRefreshView.as_view(), name="token_refresh"),
-    path("token/verify/", TokenVerifyView.as_view(), name="token_verify"),
+    # path("token/", TokenObtainPairView.as_view(), name="token_obtain_pair"),
+    # path("token/refresh/", TokenRefreshView.as_view(), name="token_refresh"),
+    # path("token/verify/", TokenVerifyView.as_view(), name="token_verify"),
     re_path(r'^.*$', NotFoundView.as_view(), name='api-404'),
 ]
 

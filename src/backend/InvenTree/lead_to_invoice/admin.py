@@ -76,12 +76,28 @@ class LeadAdmin(admin.ModelAdmin):
 # Registering Quotation model
 @admin.register(Quotation)
 class QuotationAdmin(admin.ModelAdmin):
-    list_display = ('id', 'lead', 'quotation_number', 'total_amount', 'status', 'created_at')
+    list_display = ('id', 'lead', 'quotation_number', 'total', 'status', 'created_at')  # Use 'total' instead of 'total_amount'
     search_fields = ('quotation_number', 'lead__name', 'status')
     list_filter = ('status', 'lead')
     ordering = ('-created_at',)
     list_editable = ('status',)
 
+    # Display 'quotation_number' as a method (if it's not directly a field)
+    def quotation_number(self, obj):
+        return obj.quotation_number  # Ensure this is a valid field or method
+
+    # Display 'total' as a method (if it's not directly a field)
+    def total(self, obj):
+        return obj.total_amount  # Use 'total' field from the model
+
+    class RevisionInline(admin.TabularInline):
+        model = Quotation
+        readonly_fields = ['quotation_number', 'total_amount']  # Use correct field names: 'quotation_number' and 'total'
+        extra = 0  # No extra empty rows
+
+    inlines = [RevisionInline]
+
+    
 # @admin.register(Quotation)
 # class QuotationAdmin(admin.ModelAdmin):
 #     list_display = ('id', 'lead', 'quotation_number', 'original_quotation', 'total_amount', 'status', 'created_at')
