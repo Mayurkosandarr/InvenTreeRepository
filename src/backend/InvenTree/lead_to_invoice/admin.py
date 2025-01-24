@@ -88,7 +88,9 @@ class QuotationAdmin(admin.ModelAdmin):
 
     # Display 'total' as a method (if it's not directly a field)
     def total(self, obj):
-        return obj.total_amount  # Use 'total' field from the model
+        return obj.total_amount
+        
+          # Use 'total' field from the model
 
     class RevisionInline(admin.TabularInline):
         model = Quotation
