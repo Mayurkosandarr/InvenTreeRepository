@@ -27,26 +27,24 @@ class CreateLeadView(APIView):
     queryset = Lead.objects.all()
 
     def post(self, request):
-        data = request.data
-        data['lead_number'] = generate_number('Lead')
-        lead = Lead.objects.create(**data)
-        return Response({"message": "Lead created!", "lead_number": lead.lead_number}, status=status.HTTP_201_CREATED)
+
+        try:
+            data = request.data
+            data['lead_number'] = generate_number('Lead')
+            lead = Lead.objects.create(**data)
+            return Response({"message": "Lead created!", "lead_number": lead.lead_number}, status=status.HTTP_201_CREATED)
+        
+        except Exception as e:
+              return Response(
+            {"error": f"An error occurred: {str(e)}"},
+            status=status.HTTP_400_BAD_REQUEST,
+        )
 
     def get(self, request):
         leads = Lead.objects.all()
         serializer = LeadSerializer(leads, many=True)
         return Response(serializer.data)
 
- 
-
-from rest_framework import status
-from rest_framework.response import Response
-from rest_framework.views import APIView
-from .models import Lead, Quotation
-from .serializers import QuotationSerializer
-from part.models import Part
-from django.db import transaction
- 
  
 class CreateQuotationView(APIView):
     def post(self, request):
@@ -135,12 +133,18 @@ class CreateQuotationView(APIView):
                  
                     splitVal = float(splitted_value[-1]) + 0.1
  
+            
                  
                     base_quotation_number = (
                         f"{splitted_value[-3]}-{splitted_value[-2]}-{splitVal:.1f}"
                     )
+
                     data["quotation_number"] = base_quotation_number
+                 
                    
+                    if  (data["quotation_number"][-1] == "0"):
+                        data["quotation_number"] = data["quotation_number"][0:-2]
+
  
                 except Quotation.DoesNotExist:
                     return Response(
@@ -253,6 +257,12 @@ class CreateInvoiceView(APIView):
             quotation = Quotation.objects.get(id=data['quotation_id'])  
         except Quotation.DoesNotExist:
             return Response({"error": "Quotation not found"}, status=status.HTTP_400_BAD_REQUEST)
+        try:
+            lead= Lead.objects.get(id=data['lead_id'])
+
+        except Lead.DoesNotExist:
+            return Response({"error":"Lead not found"}, status.HTTP_400_BAD_REQUEST)
+            
 
         data['invoice_number'] = generate_number('Invoice')
         invoice = Invoice.objects.create(quotation=quotation, **data)
@@ -260,6 +270,7 @@ class CreateInvoiceView(APIView):
 
     def get(self, request):
         invoices = Invoice.objects.all()
+        total_amount=Quotation.total_amount
         serializer = InvoiceSerializer(invoices, many=True)
         return Response(serializer.data)
 
@@ -338,61 +349,6 @@ class NotificationAPI(APIView):
         notifications = Notification.objects.all()
         serializer = NotificationSerializer(notifications, many=True)
         return Response(serializer.data)
-
-
-# class CreateRevisedQuotationAPI(APIView):
-#     def post(self, request, quotation_id):
-#         original_quotation = get_object_or_404(Quotation, id=quotation_id)
-
-#         base_quotation_number = original_quotation.quotation_number
-#         revised_quotation_number = base_quotation_number
-
-#         revision_suffix = 1
-#         while Quotation.objects.filter(quotation_number=revised_quotation_number).exists():
-#             revised_quotation_number = f"{base_quotation_number}.{revision_suffix}"
-#             revision_suffix += 1
-
-#         revised_quotation = Quotation(
-#             lead=original_quotation.lead,
-#             total_amount=original_quotation.total_amount,
-#             discount=original_quotation.discount,
-#             tax=original_quotation.tax,
-#             status='draft',
-#             quotation_number=revised_quotation_number 
-#         )
-
-#         try:
-#             revised_quotation.save()
-#             return Response({
-#                 "message": "Revised quotation created successfully.",
-#                 "revised_quotation_number": revised_quotation.quotation_number,
-#             }, status=status.HTTP_201_CREATED) 
-#         except Exception as e:
-#             return Response({"error": f"An error occurred: {str(e)}"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-
-# class CreateRevisedQuotationAPI(APIView):
-#     def post(self, request, quotation_id):
-#         # Fetch the original quotation
-#         original_quotation = get_object_or_404(Quotation, id=quotation_id)
-
-#         # Create a new revised quotation
-#         revised_quotation = Quotation.objects.create(
-#             lead=original_quotation.lead,
-#             original_quotation=original_quotation,
-#             items=original_quotation.items,
-#             total_amount=original_quotation.total_amount,
-#             discount=original_quotation.discount,
-#             tax=original_quotation.tax,
-#             status="draft",  # Start as a draft
-#         )
-
-#         return Response(
-#             {
-#                 "message": "Revised quotation created successfully.",
-#                 "revised_quotation_number": revised_quotation.quotation_number,
-#             },
-#             status=status.HTTP_201_CREATED,
-#         )
 
 from datetime import datetime
 

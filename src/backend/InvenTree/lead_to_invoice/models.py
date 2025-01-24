@@ -98,6 +98,7 @@ class Invoice(models.Model):
     status = models.CharField(max_length=50, choices=[('unpaid', 'Unpaid'), ('paid', 'Paid'), ('partially_paid', 'Partially Paid')])
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
+    total_amount=models.DecimalField(max_digits=10, decimal_places=2,default=0)
 
     def __str__(self):
         return f"Invoice for {self.quotation.lead.name}"

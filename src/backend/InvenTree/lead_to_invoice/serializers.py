@@ -49,7 +49,7 @@ from .models import Lead, Quotation, Invoice, NumberingSystemSettings, Notificat
 class LeadSerializer(serializers.ModelSerializer):
     class Meta:
         model = Lead
-        fields = ['id', 'name', 'email', 'phone', 'status', 'created_at', 'updated_at']  # Explicit fields
+        fields = ['id','lead_number', 'name', 'email', 'phone', 'status', 'created_at', 'updated_at']  # Explicit fields
 
 # Quotation Serializer
 class QuotationSerializer(serializers.ModelSerializer):
@@ -61,7 +61,7 @@ class QuotationSerializer(serializers.ModelSerializer):
 class InvoiceSerializer(serializers.ModelSerializer):
     class Meta:
         model = Invoice
-        fields = ['id', 'quotation', 'invoice_number', 'amount_due', 'status', 'created_at']
+        fields = ['id', 'quotation', 'invoice_number','total_amount','paid_amount', 'amount_due', 'status', 'created_at']
 
 # NumberingSystemSettings Serializer
 class NumberingSystemSettingsSerializer(serializers.ModelSerializer):
