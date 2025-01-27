@@ -34,6 +34,8 @@ class CreateLeadView(APIView):
             lead = Lead.objects.create(**data)
             return Response({"message": "Lead created!", "lead_number": lead.lead_number}, status=status.HTTP_201_CREATED)
         
+
+
         except Exception as e:
               return Response(
             {"error": f"An error occurred: {str(e)}"},
@@ -44,6 +46,8 @@ class CreateLeadView(APIView):
         leads = Lead.objects.all()
         serializer = LeadSerializer(leads, many=True)
         return Response(serializer.data)
+
+
 
  
 class CreateQuotationView(APIView):
@@ -266,11 +270,11 @@ class CreateInvoiceView(APIView):
 
         data['invoice_number'] = generate_number('Invoice')
         invoice = Invoice.objects.create(quotation=quotation, **data)
-        return Response({"message": "Invoice created!", "invoice_number": invoice.invoice_number}, status=status.HTTP_201_CREATED)
+        serializer = InvoiceSerializer(invoice)
+        return Response({"message": "Invoice created!", "invoice": serializer.data}, status=status.HTTP_201_CREATED)
 
     def get(self, request):
         invoices = Invoice.objects.all()
-        total_amount=Quotation.total_amount
         serializer = InvoiceSerializer(invoices, many=True)
         return Response(serializer.data)
 
@@ -290,7 +294,9 @@ class LeadToInvoiceView(APIView):
                 'lead': invoice.quotation.lead.name,
                 'quotation_number': invoice.quotation.quotation_number,
                 'invoice_number': invoice.invoice_number,
-                'amount_due': invoice.amount_due,
+                'total_amount': str(invoice.quotation.total_amount),
+                'paid_amount': str(invoice.paid_amount),
+                'amount_due': str(invoice.amount_due - invoice.paid_amount),  # Calculate remaining amount due
                 'status': invoice.status,
             })
 

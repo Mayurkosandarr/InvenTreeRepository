@@ -1,6 +1,9 @@
+from decimal import Decimal
 from django.utils import timezone
 from django.db import models
 from datetime import datetime
+from django.db.models import Sum
+from rest_framework.exceptions import ValidationError
 
 class Lead(models.Model):
     STATUS_CHOICES = [
@@ -89,10 +92,10 @@ class Quotation(models.Model):
 
  
 class Invoice(models.Model):
-    invoice_number = models.CharField(max_length=50, unique=True, null=True, blank=True)  
+    invoice_number = models.CharField(max_length=50, unique=True, null=True, blank=True)
+    amount_due = models.DecimalField(max_digits=10, decimal_places=2, default=0)
     quotation = models.ForeignKey(Quotation, on_delete=models.CASCADE)
     lead = models.ForeignKey(Lead, on_delete=models.CASCADE, default=1)  
-    amount_due = models.DecimalField(max_digits=10, decimal_places=2)
     paid_amount = models.DecimalField(max_digits=10, decimal_places=2, default=0)
     due_date = models.DateTimeField()
     status = models.CharField(max_length=50, choices=[('unpaid', 'Unpaid'), ('paid', 'Paid'), ('partially_paid', 'Partially Paid')])
@@ -100,6 +103,49 @@ class Invoice(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
     total_amount=models.DecimalField(max_digits=10, decimal_places=2,default=0)
 
+
+    # def save(self, *args, **kwargs):
+    #     if self.quotation:
+    #         self.total_amount= self.quotation.total_amount
+    #         self.amount_due = max(self.total_amount - self.paid_amount, 0)
+
+
+    #     super().save(*args, **kwargs)
+
+    def save(self, *args, **kwargs):
+        if self.quotation:
+            self.total_amount = self.quotation.total_amount
+
+            total_paid = Invoice.objects.filter(quotation=self.quotation).aggregate(total_paid=Sum('paid_amount'))['total_paid'] or Decimal(0)
+
+            remaining_amount_due = self.total_amount - total_paid
+
+            
+
+            try:
+                if self.paid_amount > remaining_amount_due:
+                    raise ValueError(f"Paid amount ({self.paid_amount}) exceeds the remaining amount due ({remaining_amount_due}) for this quotation.")
+
+            except ValueError as e:
+                raise ValidationError(str(e))
+            
+            if remaining_amount_due < 0:
+                remaining_amount_due = Decimal(0)
+
+            self.amount_due = max(remaining_amount_due - Decimal(self.paid_amount), Decimal(0))
+
+             
+            self.amount_due = max(remaining_amount_due - Decimal(self.paid_amount), Decimal(0))
+
+            if self.amount_due == 0:
+                self.status = 'paid'
+            elif self.amount_due < self.total_amount and self.amount_due > 0:
+                self.status = 'partially_paid'
+            else:
+                self.status = 'unpaid'
+
+        super().save(*args, **kwargs)
+ 
     def __str__(self):
         return f"Invoice for {self.quotation.lead.name}"
 
