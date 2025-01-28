@@ -58,11 +58,23 @@ class QuotationSerializer(serializers.ModelSerializer):
         fields = ['id', 'lead', 'quotation_number', 'total_amount', 'status', 'created_at']
 
 # Invoice Serializer
+# class InvoiceSerializer(serializers.ModelSerializer):
+#     class Meta:
+#         model = Invoice
+#         fields = ['id', 'quotation', 'invoice_number','total_amount','paid_amount', 'amount_due', 'status', 'created_at']
+
+
 class InvoiceSerializer(serializers.ModelSerializer):
+    quotation_number = serializers.SerializerMethodField()
     class Meta:
         model = Invoice
-        fields = ['id', 'quotation', 'invoice_number','total_amount','paid_amount', 'amount_due', 'status', 'created_at']
-
+        fields = ['id', 'quotation','quotation_number', 'invoice_number','total_amount','paid_amount', 'amount_due', 'status', 'created_at']
+ 
+ 
+    def get_quotation_number(self, obj):
+        # Accessing the 'quotation_number' field from the related 'Quotation' model
+        return obj.quotation.quotation_number if obj.quotation else None
+    
 # NumberingSystemSettings Serializer
 class NumberingSystemSettingsSerializer(serializers.ModelSerializer):
     class Meta:

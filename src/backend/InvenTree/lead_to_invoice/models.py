@@ -78,6 +78,10 @@ class Quotation(models.Model):
                 self.quotation_number = self.generate_quotation_number()
         super().save(*args, **kwargs)
 
+    def __str__(self):
+        return self.quotation_number
+    
+
     def generate_quotation_number(self):
         """
         Generate a unique quotation number for new quotations.
@@ -90,7 +94,7 @@ class Quotation(models.Model):
         )
         return f"QN-{current_month:02d}-{current_year}-{revision_count}"
 
- 
+  
 class Invoice(models.Model):
     invoice_number = models.CharField(max_length=50, unique=True, null=True, blank=True)
     amount_due = models.DecimalField(max_digits=10, decimal_places=2, default=0)
@@ -124,7 +128,7 @@ class Invoice(models.Model):
 
             try:
                 if self.paid_amount > remaining_amount_due:
-                    raise ValueError(f"Paid amount ({self.paid_amount}) exceeds the remaining amount due ({remaining_amount_due}) for this quotation.")
+                    raise ValueError(f"The amount has been already paid.")
 
             except ValueError as e:
                 raise ValidationError(str(e))
