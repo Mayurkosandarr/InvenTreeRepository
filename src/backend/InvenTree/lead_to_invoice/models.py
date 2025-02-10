@@ -43,8 +43,8 @@ class Quotation(models.Model):
     original_quotation = models.ForeignKey(
         "self", null=True, blank=True, on_delete=models.SET_NULL, related_name="revisions"
     )
-    revision_count = models.PositiveIntegerField(default=0)  # Tracks the revision number
-    items = models.JSONField(default=list)  # List of items in the quotation (IDs, names, quantities, prices)
+    revision_count = models.PositiveIntegerField(default=0)  
+    items = models.JSONField(default=list)
     total_amount = models.DecimalField(max_digits=10, decimal_places=2)
     discount = models.DecimalField(max_digits=5, decimal_places=2, null=True, blank=True)
     tax = models.DecimalField(max_digits=5, decimal_places=2, null=True, blank=True)
@@ -85,14 +85,28 @@ class Quotation(models.Model):
     def generate_quotation_number(self):
         """
         Generate a unique quotation number for new quotations.
-        The format will be QN-MONTH-YEAR.
+        The format will be QN-MONTH-YEAR-SEQUENCE.
         """
         current_month = self.created_at.month
         current_year = self.created_at.year
-        revision_count = (
-            Quotation.objects.filter(created_at__month=current_month, created_at__year=current_year).count() + 1
-        )
-        return f"QN-{current_month:02d}-{current_year}-{revision_count}"
+    
+        # Only count original quotations (not revisions)
+        latest_quotation = Quotation.objects.filter(
+            created_at__month=current_month,
+            created_at__year=current_year,
+            original_quotation__isnull=True  # This ensures we only count original quotations
+        ).order_by('-quotation_number').first()
+
+        if latest_quotation and latest_quotation.quotation_number:
+            try:
+                last_number = int(latest_quotation.quotation_number.split('-')[-1])
+                new_number = last_number + 1
+            except (ValueError, IndexError):
+                new_number = 1
+        else:
+            new_number = 1
+
+        return f"QN-{current_month:02d}-{current_year}-{new_number}"
 
   
 class Invoice(models.Model):
@@ -227,7 +241,6 @@ class Notification(models.Model):
     status = models.CharField(max_length=50, choices=STATUS_CHOICES, default='Pending')
     timestamp = models.DateTimeField(auto_now_add=True)
 
-    # New Relationships
     lead = models.ForeignKey(
         'Lead',
         on_delete=models.CASCADE,

@@ -93,7 +93,7 @@ class AuditLogMiddleware:
             # Save the request body for later usage
             if not hasattr(request, "_body"):
                 request._body = request.body  # Store the body in a custom attribute
-
+   
             # Process request
             response = self.get_response(request)
 

@@ -13,6 +13,8 @@ from django.views.decorators.csrf import csrf_exempt
 from part.models import Part
 from datetime import datetime
 from django.db import transaction
+from django.utils import timezone
+
 
 def generate_number(type):
     settings = NumberingSystemSettings.objects.get(type=type)
@@ -63,7 +65,6 @@ class CreateQuotationView(APIView):
                 {"error": "Lead not found"}, status=status.HTTP_400_BAD_REQUEST
             )
  
-        # Validate items
         items = data.get("items")
         if not isinstance(items, list) or not items:
             return Response(
@@ -71,7 +72,6 @@ class CreateQuotationView(APIView):
                 status=status.HTTP_400_BAD_REQUEST,
             )
  
-        # Validate and process items
         items.sort(key=lambda x: x.get("item_name", ""))
         for item in items:
             part_id = item.get("part_id")
@@ -91,7 +91,6 @@ class CreateQuotationView(APIView):
  
             item["part_id"] = part.id
  
-        # Process discount and tax
         discount = data.get("discount", 0)
         tax = data.get("tax", 0)
  
@@ -104,7 +103,6 @@ class CreateQuotationView(APIView):
                 status=status.HTTP_400_BAD_REQUEST,
             )
  
-        # Calculate total amount
         total_amount = 0
         for item in items:
             try:
@@ -116,47 +114,64 @@ class CreateQuotationView(APIView):
                     status=status.HTTP_400_BAD_REQUEST,
                 )
  
-        # Apply discount and tax
         total_amount -= total_amount * (discount / 100)
         total_amount += total_amount * (tax / 100)
  
-        # Generate quotation number
         with transaction.atomic():
-            ''' It goes to model save method '''
-            data["quotation_number"] = generate_number("Quotation")
- 
-            '''Main Quotation Revision Logic'''
-            # Handle revision logic
-            original_quotation = None
+        
             if parent_quotation_id:
                 try:
-                   
-                    parentObj = Quotation.objects.get(id=parent_quotation_id)
-                 
-                    splitted_value = str(parentObj.quotation_number).split("-")
-                 
-                    splitVal = float(splitted_value[-1]) + 0.1
- 
+                    parent_quotation = Quotation.objects.get(id=parent_quotation_id)
             
-                 
-                    base_quotation_number = (
-                        f"{splitted_value[-3]}-{splitted_value[-2]}-{splitVal:.1f}"
-                    )
-
-                    data["quotation_number"] = base_quotation_number
-                 
-                   
-                    if  (data["quotation_number"][-1] == "0"):
-                        data["quotation_number"] = data["quotation_number"][0:-2]
-
- 
+                    base_quotation = parent_quotation
+                    while base_quotation.original_quotation:
+                        base_quotation = base_quotation.original_quotation
+            
+                    all_revisions = Quotation.objects.filter(
+                        quotation_number__startswith=base_quotation.quotation_number + '.'
+                    ).order_by('-quotation_number')
+            
+                    highest_revision = 0
+                    for revision in all_revisions:
+                        try:
+                            revision_num = int(revision.quotation_number.split('.')[-1])
+                            highest_revision = max(highest_revision, revision_num)
+                        except (ValueError, IndexError):
+                            continue
+            
+                    next_revision = highest_revision + 1
+                    data["quotation_number"] = f"{base_quotation.quotation_number}.{next_revision}"
+                    original_quotation = base_quotation
+            
                 except Quotation.DoesNotExist:
                     return Response(
                         {"error": "Original quotation not found"},
                         status=status.HTTP_400_BAD_REQUEST,
                     )
- 
-            # Create quotation
+            else:
+                current_year = timezone.now().year
+                last_quotation = (
+                    Quotation.objects.filter(
+                        quotation_number__regex=r'^QN-\d+-\d+$',  
+                        created_at__year=current_year
+                    )
+                    .order_by('-quotation_number')
+                    .first()
+                )
+        
+                if last_quotation:
+                    match = re.search(r'QN-(\d+)-\d+$', last_quotation.quotation_number)
+                    if match:
+                        last_number = int(match.group(1))
+                        next_number = last_number + 1
+                    else:
+                        next_number = 1
+                else:
+                    next_number = 1
+        
+                data["quotation_number"] = f"QN-{next_number:03d}-{current_year}"
+                original_quotation = None
+
             quotation = Quotation.objects.create(
                 lead=lead,
                 quotation_number=data["quotation_number"],
@@ -167,21 +182,21 @@ class CreateQuotationView(APIView):
                 status=data.get("status", "draft"),
                 original_quotation=original_quotation,
             )
- 
-        return Response(
-            {
-                "message": "Quotation created!",
-                "quotation_id": quotation.id,
-                "quotation_number": quotation.quotation_number,
-                "items": quotation.items,
-                "discount": f"{int(quotation.discount)}%",
-                "tax": f"{int(quotation.tax)}%",
-                "total_amount": quotation.total_amount,
-                "status": quotation.status,
-                "parent_quotation_id": parent_quotation_id,
-            },
-            status=status.HTTP_201_CREATED,
-        )
+
+            return Response(
+                {
+                    "message": "Quotation created!",
+                    "quotation_id": quotation.id,
+                    "quotation_number": quotation.quotation_number,
+                    "items": quotation.items,
+                    "discount": f"{int(quotation.discount)}%",
+                    "tax": f"{int(quotation.tax)}%",
+                    "total_amount": quotation.total_amount,
+                    "status": quotation.status,
+                    "parent_quotation_id": parent_quotation_id,
+                },
+                status=status.HTTP_201_CREATED,
+            )
  
     def get(self, request, quotation_id=None):
         if quotation_id:
@@ -212,7 +227,7 @@ class NotificationAPI(APIView):
     def post(self, request):
         data = request.data
  
-        # Handle 'lead' field
+       
         lead_id = data.get("lead")
         if lead_id:
             try:
@@ -296,7 +311,7 @@ class LeadToInvoiceView(APIView):
                 'invoice_number': invoice.invoice_number,
                 'total_amount': str(invoice.quotation.total_amount),
                 'paid_amount': str(invoice.paid_amount),
-                'amount_due': str(invoice.amount_due - invoice.paid_amount),  # Calculate remaining amount due
+                'amount_due': str(invoice.amount_due - invoice.paid_amount),  
                 'status': invoice.status,
             })
 
@@ -362,7 +377,6 @@ from datetime import datetime
 
 class CreateRevisedQuotationAPI(APIView):
     def post(self, request):
-        # Extract fields from the request data
         lead_id = request.data.get("lead_id")
         items = request.data.get("items", [])
         discount = request.data.get("discount", 0)
@@ -370,20 +384,16 @@ class CreateRevisedQuotationAPI(APIView):
         quotation_status = request.data.get("status", "draft")
         original_quotation_id = request.data.get("original_quotation_id")  # ID for revision
 
-        # Validate required fields
         if not items:
             return Response({"error": "Items are required."}, status=status.HTTP_400_BAD_REQUEST)
 
-        # Check for original quotation if this is a revision
         original_quotation = None
         quotation_number = None
 
         if original_quotation_id:
             try:
-                # Fetch the original quotation
                 original_quotation = Quotation.objects.get(id=original_quotation_id)
 
-                # Generate a revised quotation number
                 existing_revisions = Quotation.objects.filter(original_quotation=original_quotation)
                 if existing_revisions.exists():
                     last_revision_number = existing_revisions.latest("id").quotation_number
@@ -393,27 +403,22 @@ class CreateRevisedQuotationAPI(APIView):
                     base_number = original_quotation.quotation_number
                     revision_count = 1
 
-                # Format the revised quotation number
                 quotation_number = f"{base_number}.{revision_count}"
-                lead_id = original_quotation.lead_id  # Inherit lead_id from the original
+                lead_id = original_quotation.lead_id 
             except Quotation.DoesNotExist:
                 return Response({"error": "Original quotation not found."}, status=status.HTTP_404_NOT_FOUND)
         else:
-            # Validate `lead_id` for new quotations
             if not lead_id:
                 return Response({"error": "Lead ID is required for new quotations."}, status=status.HTTP_400_BAD_REQUEST)
 
-            # Generate a new quotation number for fresh quotations
             current_year = datetime.now().year
             quotation_number = f"QN-{lead_id}-{current_year}"
 
-        # Calculate total amount from items
         try:
             total_amount = sum(item["total"] for item in items)
         except KeyError:
             return Response({"error": "Each item must include a 'total' field."}, status=status.HTTP_400_BAD_REQUEST)
 
-        # Create and save the quotation
         quotation = Quotation(
             quotation_number=quotation_number,
             lead_id=lead_id,
@@ -422,11 +427,10 @@ class CreateRevisedQuotationAPI(APIView):
             discount=discount,
             tax=tax,
             status=quotation_status,
-            original_quotation=original_quotation,  # Link to original quotation if revision
+            original_quotation=original_quotation, 
         )
         quotation.save()
 
-        # Return the created quotation response
         return Response({
             "message": "Quotation created successfully.",
             "quotation_id": quotation.id,
