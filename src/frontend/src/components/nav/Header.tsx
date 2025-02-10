@@ -166,6 +166,19 @@ function NavTabs() {
       );
     });
 
+    // Add the Invoice tab
+    _tabs.push(
+      <Tabs.Tab
+        value="invoice"
+        key="invoice"
+        onClick={(event: any) =>
+          navigateToLink('/invoice', navigate, event)
+        }
+      >
+        Invoice
+      </Tabs.Tab>
+    );
+
     return _tabs;
   }, [mainNavTabs, user]);
 

@@ -2,6 +2,7 @@ import { lazy } from 'react';
 import { Navigate, Route, Routes } from 'react-router-dom';
 
 import { Loadable } from './functions/loading';
+import Invoice from './components/nav/invoice';
 
 // Lazy loaded pages
 export const LayoutComponent = Loadable(
@@ -168,6 +169,7 @@ export const routes = (
         <Route path='customer/:id/*' element={<CustomerDetail />} />
       </Route>
     </Route>
+    <Route path='invoice' element={<Invoice />} />
     <Route path='/' errorElement={<ErrorPage />}>
       <Route path='/login' element={<Login />} />,
       <Route path='/logout' element={<Logout />} />,
