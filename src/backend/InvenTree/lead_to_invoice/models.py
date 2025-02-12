@@ -133,28 +133,32 @@ class Invoice(models.Model):
     def save(self, *args, **kwargs):
         if self.quotation:
             self.total_amount = self.quotation.total_amount
-
-            total_paid = Invoice.objects.filter(quotation=self.quotation).aggregate(total_paid=Sum('paid_amount'))['total_paid'] or Decimal(0)
-
-            remaining_amount_due = self.total_amount - total_paid
-
+        
+            # Calculate total paid amount for this quotation
+            total_paid = Invoice.objects.filter(quotation=self.quotation).aggregate(
+                total_paid=Sum('paid_amount'))['total_paid'] or Decimal(0)
+        
+            # Convert paid_amount to Decimal if it's a string
+            if isinstance(self.paid_amount, str):
+                self.paid_amount = Decimal(self.paid_amount)
             
+            remaining_amount_due = self.total_amount - total_paid
 
             try:
                 if self.paid_amount > remaining_amount_due:
-                    raise ValueError(f"The amount has been already paid.")
-
+                    raise ValueError("The amount has been already paid.")
             except ValueError as e:
                 raise ValidationError(str(e))
-            
+        
             if remaining_amount_due < 0:
                 remaining_amount_due = Decimal(0)
-
-            self.amount_due = max(remaining_amount_due - Decimal(self.paid_amount), Decimal(0))
-
-             
-            self.amount_due = max(remaining_amount_due - Decimal(self.paid_amount), Decimal(0))
-
+            
+            self.amount_due = max(remaining_amount_due - self.paid_amount, Decimal(0))
+        
+            # Remove duplicate line
+            # self.amount_due = max(remaining_amount_due - Decimal(self.paid_amount), Decimal(0))
+        
+            # Set status based on amount due
             if self.amount_due == 0:
                 self.status = 'paid'
             elif self.amount_due < self.total_amount and self.amount_due > 0:
@@ -163,9 +167,6 @@ class Invoice(models.Model):
                 self.status = 'unpaid'
 
         super().save(*args, **kwargs)
- 
-    def __str__(self):
-        return f"Invoice for {self.quotation.lead.name}"
 
     class Meta:
         verbose_name = "Invoice"
