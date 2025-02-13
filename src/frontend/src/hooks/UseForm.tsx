@@ -133,3 +133,17 @@ export function useDeleteApiFormModal(props: ApiFormModalProps) {
 
   return useApiFormModal(deleteProps);
 }
+
+export function useCreateInvoiceFormModal(props: ApiFormModalProps) {
+  const invoiceProps = useMemo<ApiFormModalProps>(
+    () => ({
+      ...props,
+      fetchInitialData: props.fetchInitialData ?? false,
+      successMessage: props.successMessage ?? t`Invoice Created`,
+      method: 'POST'
+    }),
+    [props]
+  );
+ 
+  return useApiFormModal(invoiceProps);
+}

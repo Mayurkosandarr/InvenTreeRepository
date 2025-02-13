@@ -1,12 +1,29 @@
+from datetime import datetime
 from rest_framework import serializers
 from .models import Lead, Quotation, Invoice, NumberingSystemSettings, Notification, LeadToInvoice
 import pytz
 from django.utils import timezone
 
 class LeadSerializer(serializers.ModelSerializer):
+    created_at = serializers.SerializerMethodField()
+    updated_at = serializers.SerializerMethodField()
     class Meta:
         model = Lead
         fields = ['id','lead_number', 'name', 'email', 'phone', 'status', 'created_at', 'updated_at']  # Explicit fields
+
+    def get_created_at(self, obj):
+        return timezone.localtime(
+            obj.created_at, 
+            pytz.timezone('Asia/Kolkata')
+        ).strftime("%d-%m-%Y %I:%M %p")  # Format: DD-MM-YYYY HH:MM AM/PM
+    
+    def get_updated_at(self, obj):
+        return timezone.localtime(
+            obj.updated_at, 
+            pytz.timezone('Asia/Kolkata')
+        ).strftime("%d-%m-%Y %I:%M %p")  # Format: DD-MM-YYYY HH:MM AM/PM
+
+
 
 class QuotationSerializer(serializers.ModelSerializer):
     class Meta:
@@ -31,10 +48,24 @@ class InvoiceSerializer(serializers.ModelSerializer):
     def get_due_date(self, obj):
         if not obj.due_date:
             return None
-        return timezone.localtime(
-            obj.due_date, 
-            pytz.timezone('Asia/Kolkata')
-        ).strftime("%d-%m-%Y")  # Changed format to match DD-MM-YYYY
+
+        # Convert string to datetime if necessary
+        due_date = obj.due_date
+        if isinstance(due_date, str):
+            try:
+                due_date = datetime.strptime(due_date, "%Y-%m-%d")
+            except ValueError:
+                return None
+
+        # Ensure due_date is timezone-aware
+        if timezone.is_naive(due_date):
+            due_date = timezone.make_aware(due_date, timezone=pytz.UTC)
+
+        # Convert to Asia/Kolkata timezone
+        india_tz = pytz.timezone('Asia/Kolkata')
+        local_due_date = due_date.astimezone(india_tz)
+
+        return local_due_date.strftime("%d-%m-%Y")
     
     def get_created_at(self, obj):
         return timezone.localtime(

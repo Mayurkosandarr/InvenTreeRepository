@@ -14,6 +14,9 @@ from part.models import Part
 from datetime import datetime
 from django.db import transaction
 from django.utils import timezone
+from django.core.exceptions import ValidationError
+
+
 
 
 def generate_number(type):
@@ -29,20 +32,27 @@ class CreateLeadView(APIView):
     queryset = Lead.objects.all()
 
     def post(self, request):
-
         try:
-            data = request.data
-            data['lead_number'] = generate_number('Lead')
-            lead = Lead.objects.create(**data)
-            return Response({"message": "Lead created!", "lead_number": lead.lead_number}, status=status.HTTP_201_CREATED)
-        
+            with transaction.atomic():  
+                data = request.data.copy() 
+                
+                lead = Lead(**data)
+                lead.lead_number = lead.generate_lead_number()
+                lead.save()
 
+                return Response({
+                    "message": "Lead created!", 
+                    "lead_number": lead.lead_number
+                }, status=status.HTTP_201_CREATED)
 
+        except ValidationError as e:
+            return Response({
+                "error": f"Validation error: {str(e)}"
+            }, status=status.HTTP_400_BAD_REQUEST)
         except Exception as e:
-              return Response(
-            {"error": f"An error occurred: {str(e)}"},
-            status=status.HTTP_400_BAD_REQUEST,
-        )
+            return Response({
+                "error": f"An error occurred: {str(e)}"
+            }, status=status.HTTP_400_BAD_REQUEST)
 
     def get(self, request):
         leads = Lead.objects.all()

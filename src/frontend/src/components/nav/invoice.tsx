@@ -21,7 +21,7 @@ const Invoice = () => {
     amount_due: string;
     status: string;
     created_at: string;
-    lead?: number;
+    lead_id?: number;
     due_date?: string;
   }
  
@@ -62,7 +62,7 @@ const Invoice = () => {
   const fetchInvoices = async () => {
     try {
       setLoading(true);
-      const response = await fetch('http://127.0.0.1:8000/api/lead_to_invoice/invoices/');
+      const response = await fetch('http://127.0.0.1:8000/api/lead-to-invoice/invoices/');
       const result = await response.json();
       if (response.ok) {
         setInvoices(result);
@@ -79,7 +79,7 @@ const Invoice = () => {
  
   const fetchLeads = async () => {
     try {
-      const response = await fetch('http://127.0.0.1:8000/api/lead_to_invoice/leads/'); // Adjust API endpoint if necessary
+      const response = await fetch('http://127.0.0.1:8000/api/lead-to-invoice/leads/'); // Adjust API endpoint if necessary
       const result = await response.json();
       if (response.ok) {
         setLeads(result);
@@ -93,7 +93,7 @@ const Invoice = () => {
  
   const fetchQuotations = async () => {
     try {
-      const response = await fetch('http://127.0.0.1:8000/api/lead_to_invoice/quotations/');
+      const response = await fetch('http://127.0.0.1:8000/api/lead-to-invoice/quotations/');
       const result = await response.json();
       if (response.ok) {
         setQuotations(result);
@@ -145,7 +145,7 @@ const Invoice = () => {
  
     try {
       setLoading(true);
-      const response = await fetch('http://127.0.0.1:8000/api/lead_to_invoice/invoices/', {
+      const response = await fetch('http://127.0.0.1:8000/api/lead-to-invoice/invoices/', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -283,7 +283,7 @@ const Invoice = () => {
             <td>{invoice.created_at}</td>
            
             {/* <td>{invoice.lead_id ?? 'N/A'}</td> */}
-            <td>{getLeadNameById(invoice.lead ?? '')}</td>
+            <td>{getLeadNameById(invoice.lead_id ?? '')}</td>
             <td>{invoice.due_date ?? 'N/A'}</td>
           </tr>
         ))}
@@ -295,4 +295,7 @@ const Invoice = () => {
   );
 };
  
-export default Invoice;
+export default  Invoice ;
+
+
+

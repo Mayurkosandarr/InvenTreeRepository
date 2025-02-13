@@ -249,3 +249,17 @@ export function CreatedByFilter({
     choices: choices
   };
 }
+
+export function PaidStatusFilter(): TableFilter {
+  return {
+    name: 'paid_status',
+    label: t`Paid Status`,
+    description: t`Filter by paid status`,
+    type: 'choice',
+    choices: [
+      { value: 'paid', label: t`Paid` },
+      { value: 'unpaid', label: t`Unpaid` },
+      { value: 'partially_paid', label: t`Partially Paid` }
+    ]
+  };
+}

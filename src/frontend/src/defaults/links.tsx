@@ -21,7 +21,6 @@ export const navTabs = [
     name: 'purchasing',
     role: UserRoles.purchase_order
   },
-  { text: <Trans>Sales</Trans>, name: 'sales', role: UserRoles.sales_order },
   { text: <Trans>Sales</Trans>, name: 'sales', role: UserRoles.sales_order }
 
 ];
