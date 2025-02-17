@@ -732,3 +732,5 @@ export function DeleteApiForm({
 
   return <OptionsApiForm props={deleteProps} id={id} />;
 }
+
+export type { ApiFormFieldSet };

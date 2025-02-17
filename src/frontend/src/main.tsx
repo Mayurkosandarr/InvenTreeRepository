@@ -22,7 +22,7 @@ declare global {
       server_list: HostList;
       default_server: string;
       show_server_selector: boolean;
-      base_url: string;
+      base_url: string; 
       sentry_dsn?: string;
       environment?: string;
     };
