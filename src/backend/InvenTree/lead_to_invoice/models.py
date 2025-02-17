@@ -15,7 +15,7 @@ def validate_name(value):
     if not re.match("^[a-zA-Z ]*$", value):
         raise ValidationError('Name can only contain alphabets and spaces')
     if len(value.strip()) < 2:
-        raise ValidationError('Name must be at least 2 characters long')
+        raise ValidationErr or('Name must be at least 2 characters long')
 
 def validate_gmail(value):
     if not value.lower().endswith('@gmail.com'):
@@ -38,7 +38,6 @@ class Lead(models.Model):
 
     status = models.CharField(max_length=50, choices=STATUS_CHOICES, default='new')
 
-    notes = models.TextField(null=True, blank=True)
 
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
@@ -50,7 +49,6 @@ class Lead(models.Model):
         """
         current_year = timezone.now().year
     
-        # Get the latest lead number for the current year
         latest_lead = Lead.objects.filter(
             created_at__year=current_year,
             lead_number__isnull=False
@@ -58,7 +56,6 @@ class Lead(models.Model):
 
         if latest_lead and latest_lead.lead_number:
             try:
-                # Extract number from LD-XXX-YYYY format
                 parts = latest_lead.lead_number.split('-')
                 if len(parts) == 3 and parts[0] == 'LD':
                     last_number = int(parts[1])
@@ -70,10 +67,8 @@ class Lead(models.Model):
         else:
             new_number = 1
 
-        # Format with leading zeros (3 digits)
         lead_number = f"LD-{new_number:03d}-{current_year}"
     
-        # Ensure uniqueness
         while Lead.objects.filter(lead_number=lead_number).exists():
             new_number += 1
             lead_number = f"LD-{new_number:03d}-{current_year}"
@@ -81,7 +76,6 @@ class Lead(models.Model):
         return lead_number
 
     def save(self, *args, **kwargs):
-        """Override save method to generate lead number and run validations"""
         if not self.lead_number:
             self.lead_number = self.generate_lead_number()
         
@@ -90,20 +84,16 @@ class Lead(models.Model):
 
 
     def clean(self):
-        """Custom model validation"""
         super().clean()
         
-        # Phone validation
         if self.phone:
             if not self.phone.isdigit():
                 raise ValidationError({'phone': 'Phone number can only contain digits'})
 
-        # Address validation
         if self.address and len(self.address.strip()) < 10:
             raise ValidationError({'address': 'Address is too short'})
 
     def save(self, *args, **kwargs):
-        """Override save method to run validations"""
         self.full_clean()
         super().save(*args, **kwargs)
 

@@ -1,4 +1,5 @@
 import datetime
+from decimal import Decimal
 from gettext import translation
 from django.shortcuts import get_object_or_404
 from django.http import JsonResponse
@@ -23,6 +24,12 @@ def generate_number(type):
     settings = NumberingSystemSettings.objects.get(type=type)
     current_number = settings.current_number
     new_number = f"{settings.prefix or ''}{current_number}{settings.suffix or ''}"
+    
+    # Ensure the generated number is unique
+    while Invoice.objects.filter(invoice_number=new_number).exists():
+        settings.current_number += settings.increment_step
+        new_number = f"{settings.prefix or ''}{settings.current_number}{settings.suffix or ''}"
+    
     settings.current_number += settings.increment_step
     settings.save()
     return new_number
@@ -277,24 +284,116 @@ class NotificationAPI(APIView):
         serializer = NotificationSerializer(notifications, many=True)
         return Response(serializer.data)
 
+
+
+# class CreateInvoiceView(APIView):
+#     queryset = Invoice.objects.all()
+
+#     def post(self, request):
+#         data = request.data
+#         try:
+#             quotation = Quotation.objects.get(id=data['quotation_id'])
+#         except Quotation.DoesNotExist:
+#             return Response({"error": "Quotation not found"}, status=status.HTTP_400_BAD_REQUEST)
+#         try:
+#             lead = Lead.objects.get(id=data['lead_id'])
+#         except Lead.DoesNotExist:
+#             return Response({"error": "Lead not found"}, status=status.HTTP_400_BAD_REQUEST)
+
+#         data['invoice_number'] = generate_number('Invoice')
+#         total_amount = Decimal(data.get('total_amount', '0'))
+#         paid_amount = Decimal(data.get('paid_amount', '0'))
+#         if paid_amount == 0:
+#             data['status'] = 'unpaid'
+#         elif paid_amount < total_amount:
+#             data['status'] = 'partially_paid'
+#         else:
+#             data['status'] = 'paid'
+
+#         # Convert due_date to the correct format
+#         due_date_str = data.get('due_date', '')
+#         try:
+#             due_date = datetime.strptime(due_date_str, '%d-%m-%Y')
+#             data['due_date'] = due_date.strftime('%Y-%m-%d')
+#         except ValueError:
+#             return Response({"error": "Invalid date format. It must be in DD-MM-YYYY format."}, status=status.HTTP_400_BAD_REQUEST)
+
+#         invoice = Invoice.objects.create(quotation=quotation, **data)
+#         serializer = InvoiceSerializer(invoice)
+#         return Response({"message": "Invoice created!", "invoice": serializer.data}, status=status.HTTP_201_CREATED)
+
+#     def get(self, request):
+#         invoices = Invoice.objects.all()
+#         serializer = InvoiceSerializer(invoices, many=True)
+#         return Response(serializer.data)
+
+
+
+
+from decimal import Decimal
+from datetime import datetime
+import pytz
+from django.utils import timezone
+from rest_framework.views import APIView
+from rest_framework.response import Response
+from rest_framework import status
+from .models import Invoice, Quotation, Lead
+from .serializers import InvoiceSerializer
+from django.db import transaction
+from django.core.exceptions import ValidationError
+
 class CreateInvoiceView(APIView):
     queryset = Invoice.objects.all()
 
+    @transaction.atomic
     def post(self, request):
         data = request.data
+
+        # Get Quotation
         try:
-            quotation = Quotation.objects.get(id=data['quotation_id'])  
+            quotation = Quotation.objects.get(id=data['quotation_id'])
         except Quotation.DoesNotExist:
             return Response({"error": "Quotation not found"}, status=status.HTTP_400_BAD_REQUEST)
+
+        # Get Lead
         try:
-            lead= Lead.objects.get(id=data['lead_id'])
-
+            lead = Lead.objects.get(id=data['lead_id'])
         except Lead.DoesNotExist:
-            return Response({"error":"Lead not found"}, status.HTTP_400_BAD_REQUEST)
-            
+            return Response({"error": "Lead not found"}, status=status.HTTP_400_BAD_REQUEST)
 
+        # Generate unique invoice number
         data['invoice_number'] = generate_number('Invoice')
-        invoice = Invoice.objects.create(quotation=quotation, **data)
+
+        # Parse due_date in dd-mm-yyyy format
+        if 'due_date' in data:
+            try:
+                data['due_date'] = datetime.strptime(data['due_date'], "%d-%m-%Y")
+                data['due_date'] = timezone.make_aware(data['due_date'], timezone=pytz.UTC)
+            except ValueError:
+                return Response({"error": "Invalid due_date format. Use dd-mm-yyyy"}, status=status.HTTP_400_BAD_REQUEST)
+
+        # Remove items field if it exists
+        data.pop('items', None)
+
+        # Try creating the invoice
+        try:
+            invoice = Invoice.objects.create(quotation=quotation, lead=lead, **data)
+
+            if invoice.status == 'paid':
+                Invoice.objects.filter(
+                    quotation=quotation,
+                    status__in=['partially_paid', 'unpaid']
+                ).delete()
+
+            elif invoice.status == 'partially_paid':
+                Invoice.objects.filter(
+                    quotation=quotation,
+                    status='unpaid'
+                ).delete()
+
+        except ValidationError as e:
+            return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
+
         serializer = InvoiceSerializer(invoice)
         return Response({"message": "Invoice created!", "invoice": serializer.data}, status=status.HTTP_201_CREATED)
 
@@ -302,8 +401,6 @@ class CreateInvoiceView(APIView):
         invoices = Invoice.objects.all()
         serializer = InvoiceSerializer(invoices, many=True)
         return Response(serializer.data)
-
-
 
 class LeadToInvoiceView(APIView):
     queryset = LeadToInvoice.objects.all()

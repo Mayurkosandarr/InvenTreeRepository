@@ -9,7 +9,7 @@ class LeadSerializer(serializers.ModelSerializer):
     updated_at = serializers.SerializerMethodField()
     class Meta:
         model = Lead
-        fields = ['id','lead_number', 'name', 'email', 'phone', 'status', 'created_at', 'updated_at']  # Explicit fields
+        fields = ['id','lead_number', 'name', 'email', 'phone', 'address','source','status', 'created_at', 'updated_at']  # Explicit fields
 
     def get_created_at(self, obj):
         return timezone.localtime(
