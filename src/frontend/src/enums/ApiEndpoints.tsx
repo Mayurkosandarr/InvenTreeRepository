@@ -5,6 +5,7 @@
  * the primary key should be appended to the endpoint.
  * The exception to this is when the endpoint provides an :id parameter.
  */
+const BASE_URL = 'http://127.0.0.1:8000/api/lead_to_invoice/';
 
 export enum ApiEndpoints {
   api_server_info = '',
@@ -223,5 +224,10 @@ export enum ApiEndpoints {
   custom_unit_list = 'units/',
   ui_preference = 'web/ui_preference/',
   notes_image_upload = 'notes-image-upload/',
-  invoice_list = '/lead_to_invoice/invoices/'
+  // invoice_list = '/lead_to_invoice/invoices/'
+
+  // Lead to Invoice API endpoints
+  invoices = `${BASE_URL}invoices/`,
+  leads = `${BASE_URL}leads/`,
+  quotations= `${BASE_URL}quotations/`
 }

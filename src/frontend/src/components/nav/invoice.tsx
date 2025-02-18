@@ -3,6 +3,7 @@ import { useState, useEffect } from 'react';
 import { FiX } from "react-icons/fi"; // X for cancel
 import { t } from '@lingui/macro';
 import './Invoice.css'; // Import the CSS file
+import { ApiEndpoints } from '../../enums/ApiEndpoints';
 
 const Invoice = ({ onClose }: { onClose: () => void }) => {
   const [quotationId, setQuotationId] = useState('');
@@ -29,7 +30,7 @@ const Invoice = ({ onClose }: { onClose: () => void }) => {
 
   const fetchQuotations = async () => {
     try {
-      const response = await fetch('http://127.0.0.1:8000/api/lead_to_invoice/quotations/');
+      const response = await fetch(ApiEndpoints.quotations);
       const result = await response.json();
       if (response.ok) {
         setQuotations(result);
@@ -70,7 +71,7 @@ const Invoice = ({ onClose }: { onClose: () => void }) => {
 console.log("formatted data",data.due_date);
     try {
       setLoading(true);
-      const response = await fetch('http://127.0.0.1:8000/api/lead_to_invoice/invoices/', {
+      const response = await fetch(ApiEndpoints.invoices, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

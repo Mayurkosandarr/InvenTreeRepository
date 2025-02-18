@@ -97,7 +97,7 @@ export function PaidInvoiceTable({
   const invoiceFields = useInvoiceFields();
 
   const newInvoice = useCreateApiFormModal({
-    url: ApiEndpoints.invoice_list,
+    url: ApiEndpoints.invoices,
     title: t`Add Invoice`,
     fields: invoiceFields,
     initialData: {
@@ -169,7 +169,7 @@ export function PaidInvoiceTable({
     <>
       {newInvoice.modal}
       <InvenTreeTable
-        url={apiUrl(ApiEndpoints.invoice_list)}
+        url={apiUrl(ApiEndpoints.invoices)}
         tableState={table}
         columns={tableColumns}
         props={{

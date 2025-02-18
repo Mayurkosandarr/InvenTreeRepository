@@ -34,7 +34,7 @@ export function PartialPaidInvoiceTable({
  
   const fetchLeads = async () => {
     try {
-      const response = await fetch('http://127.0.0.1:8000/api/lead_to_invoice/leads/');
+      const response = await fetch(ApiEndpoints.leads);
       const result = await response.json();
       if (response.ok) {
         const leadMap: Record<number, string> = {};
@@ -53,7 +53,7 @@ export function PartialPaidInvoiceTable({
  
   const fetchInvoices = async () => {
     try {
-      const response = await fetch('http://127.0.0.1:8000/api/lead_to_invoice/invoices/');
+      const response = await fetch(ApiEndpoints.invoices);
       const result = await response.json();
       if (response.ok) {
         const partiallyPaidInvoices = result.filter((invoice: any) => invoice.status === 'partially_paid');
@@ -67,7 +67,7 @@ export function PartialPaidInvoiceTable({
   };
  
   const newInvoice = useCreateApiFormModal({
-    url: ApiEndpoints.invoice_list,
+    url: ApiEndpoints.invoices,
     title: t`Add Invoice`,
     fields: useInvoiceFields(),
     initialData: { customer: customerId },

@@ -31,7 +31,7 @@ export default function PaidInvoiceTable({
  
   const fetchLeads = async () => {
     try {
-      const response = await fetch('http://127.0.0.1:8000/api/lead_to_invoice/leads/');
+      const response = await fetch(ApiEndpoints.leads);
       const result = await response.json();
       if (response.ok) {
         const leadMap: Record<number, string> = {};
@@ -49,7 +49,7 @@ export default function PaidInvoiceTable({
  
   const fetchInvoices = async () => {
     try {
-      const response = await fetch('http://127.0.0.1:8000/api/lead_to_invoice/invoices/');
+      const response = await fetch(ApiEndpoints.invoices);
       const result = await response.json();
       if (response.ok) {
         const paidInvoices = result.filter((invoice: any) => invoice.status === 'paid');
@@ -63,7 +63,7 @@ export default function PaidInvoiceTable({
   };
  
   const newInvoice = useCreateApiFormModal({
-    url: ApiEndpoints.invoice_list,
+    url: ApiEndpoints.invoices,
     title: t`Add Invoice`,
     fields: useInvoiceFields(),
     initialData: { customer: customerId },
