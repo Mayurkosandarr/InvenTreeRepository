@@ -70,6 +70,7 @@ export type InvenTreeTableProps<T = any> = {
   enableFilters?: boolean;
   enableSelection?: boolean;
   enableSearch?: boolean;
+  onSearch?: (term: string) => void;
   enablePagination?: boolean;
   enableRefresh?: boolean;
   enableColumnSwitching?: boolean;
