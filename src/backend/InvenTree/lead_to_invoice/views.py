@@ -69,48 +69,210 @@ class CreateLeadView(APIView):
 
 
  
+# class CreateQuotationView(APIView):
+#     def post(self, request):
+#         data = request.data
+#         parent_quotation_id = data.get("parent_quotation_id")
+ 
+ 
+#         try:
+#             lead = Lead.objects.get(id=data["lead_id"])
+#         except Lead.DoesNotExist:
+#             return Response(
+#                 {"error": "Lead not found"}, status=status.HTTP_400_BAD_REQUEST
+#             )
+ 
+#         items = data.get("items")
+#         if not isinstance(items, list) or not items:
+#             return Response(
+#                 {"error": "Items must be a non-empty list"},
+#                 status=status.HTTP_400_BAD_REQUEST,
+#             )
+ 
+#         items.sort(key=lambda x: x.get("item_name", ""))
+#         for item in items:
+#             part_id = item.get("part_id")
+#             if not part_id:
+#                 return Response(
+#                     {"error": "Each item must have a part_id"},
+#                     status=status.HTTP_400_BAD_REQUEST,
+#                 )
+ 
+#             try:
+#                 part = Part.objects.get(id=part_id)
+#             except Part.DoesNotExist:
+#                 return Response(
+#                     {"error": f"Part with ID {part_id} not found"},
+#                     status=status.HTTP_400_BAD_REQUEST,
+#                 )
+ 
+#             item["part_id"] = part.id
+        
+#         discount = data.get("discount", 0)
+#         tax = data.get("tax", 0)
+ 
+#         try:
+#             discount = float(discount)
+#             tax = float(tax)
+#         except ValueError:
+#             return Response(
+#                 {"error": "Discount and tax must be valid numbers"},
+#                 status=status.HTTP_400_BAD_REQUEST,
+#             )
+ 
+#         total_amount = 0
+#         for item in items:
+#             try:
+#                 item["total"] = item["quantity"] * item["price"]
+#                 total_amount += item["total"]
+#             except KeyError:
+#                 return Response(
+#                     {"error": "Each item must have quantity and price"},
+#                     status=status.HTTP_400_BAD_REQUEST,
+#                 )
+ 
+#         total_amount -= total_amount * (discount / 100)
+#         total_amount += total_amount * (tax / 100)
+ 
+#         with transaction.atomic():
+        
+#             if parent_quotation_id:
+#                 try:
+#                     parent_quotation = Quotation.objects.get(id=parent_quotation_id)
+            
+#                     base_quotation = parent_quotation
+#                     while base_quotation.original_quotation:
+#                         base_quotation = base_quotation.original_quotation
+            
+#                     all_revisions = Quotation.objects.filter(
+#                         quotation_number__startswith=base_quotation.quotation_number + '.'
+#                     ).order_by('-quotation_number')
+            
+#                     highest_revision = 0
+#                     for revision in all_revisions:
+#                         try:
+#                             revision_num = int(revision.quotation_number.split('.')[-1])
+#                             highest_revision = max(highest_revision, revision_num)
+#                         except (ValueError, IndexError):
+#                             continue
+            
+#                     next_revision = highest_revision + 1
+#                     data["quotation_number"] = f"{base_quotation.quotation_number}.{next_revision}"
+#                     original_quotation = base_quotation
+            
+#                 except Quotation.DoesNotExist:
+#                     return Response(
+#                         {"error": "Original quotation not found"},
+#                         status=status.HTTP_400_BAD_REQUEST,
+#                     )
+#             else:
+#                 current_year = timezone.now().year
+#                 last_quotation = (
+#                     Quotation.objects.filter(
+#                         quotation_number__regex=r'^QN-\d+-\d+$',  
+#                         created_at__year=current_year
+#                     )
+#                     .order_by('-quotation_number')
+#                     .first()
+#                 )
+        
+#                 if last_quotation:
+#                     match = re.search(r'QN-(\d+)-\d+$', last_quotation.quotation_number)
+#                     if match:
+#                         last_number = int(match.group(1))
+#                         next_number = last_number + 1
+#                     else:
+#                         next_number = 1
+#                 else:
+#                     next_number = 1
+        
+#                 data["quotation_number"] = f"QN-{next_number:03d}-{current_year}"
+#                 original_quotation = None
+
+#             quotation = Quotation.objects.create(
+#                 lead=lead,
+#                 quotation_number=data["quotation_number"],
+#                 items=items,
+#                 total_amount=total_amount,
+#                 discount=discount,
+#                 tax=tax,
+#                 status=data.get("status", "draft"),
+#                 original_quotation=original_quotation,
+#             )
+
+#             return Response(
+#                 {
+#                     "message": "Quotation created!",
+#                     "quotation_id": quotation.id,
+#                     "quotation_number": quotation.quotation_number,
+#                     "items": quotation.items,
+#                     "discount": f"{int(quotation.discount)}%",
+#                     "tax": f"{int(quotation.tax)}%",
+#                     "total_amount": quotation.total_amount,
+#                     "status": quotation.status,
+#                     "parent_quotation_id": parent_quotation_id,
+#                 },
+#                 status=status.HTTP_201_CREATED,
+#             )
+ 
+#     def get(self, request, quotation_id=None):
+#         if quotation_id:
+#             try:
+#                 quotation = Quotation.objects.get(id=quotation_id)
+#                 return Response(QuotationSerializer(quotation).data)
+#             except Quotation.DoesNotExist:
+#                 return Response(
+#                     {"error": "Quotation not found"},
+#                     status=status.HTTP_404_NOT_FOUND,
+#                 )
+ 
+#         quotations = Quotation.objects.all()
+#         return Response(QuotationSerializer(quotations, many=True).data)
+ 
+
+
 class CreateQuotationView(APIView):
     def post(self, request):
         data = request.data
         parent_quotation_id = data.get("parent_quotation_id")
- 
- 
+
         try:
             lead = Lead.objects.get(id=data["lead_id"])
         except Lead.DoesNotExist:
             return Response(
                 {"error": "Lead not found"}, status=status.HTTP_400_BAD_REQUEST
             )
- 
+
         items = data.get("items")
         if not isinstance(items, list) or not items:
             return Response(
                 {"error": "Items must be a non-empty list"},
                 status=status.HTTP_400_BAD_REQUEST,
             )
- 
+
         items.sort(key=lambda x: x.get("item_name", ""))
         for item in items:
-            part_id = item.get("part_id")
-            if not part_id:
+            item_name = item.get("item_name")
+            if not item_name:
                 return Response(
-                    {"error": "Each item must have a part_id"},
+                    {"error": "Each item must have an item_name"},
                     status=status.HTTP_400_BAD_REQUEST,
                 )
- 
+
             try:
-                part = Part.objects.get(id=part_id)
+                part = Part.objects.get(name=item_name)
             except Part.DoesNotExist:
                 return Response(
-                    {"error": f"Part with ID {part_id} not found"},
+                    {"error": f"Part with name {item_name} not found"},
                     status=status.HTTP_400_BAD_REQUEST,
                 )
- 
+
             item["part_id"] = part.id
- 
+            item["price"] = part.price  # Fetch the price from the part model
+
         discount = data.get("discount", 0)
         tax = data.get("tax", 0)
- 
+
         try:
             discount = float(discount)
             tax = float(tax)
@@ -119,7 +281,7 @@ class CreateQuotationView(APIView):
                 {"error": "Discount and tax must be valid numbers"},
                 status=status.HTTP_400_BAD_REQUEST,
             )
- 
+
         total_amount = 0
         for item in items:
             try:
@@ -130,24 +292,22 @@ class CreateQuotationView(APIView):
                     {"error": "Each item must have quantity and price"},
                     status=status.HTTP_400_BAD_REQUEST,
                 )
- 
+
         total_amount -= total_amount * (discount / 100)
         total_amount += total_amount * (tax / 100)
- 
+
         with transaction.atomic():
-        
             if parent_quotation_id:
                 try:
                     parent_quotation = Quotation.objects.get(id=parent_quotation_id)
-            
                     base_quotation = parent_quotation
                     while base_quotation.original_quotation:
                         base_quotation = base_quotation.original_quotation
-            
+
                     all_revisions = Quotation.objects.filter(
                         quotation_number__startswith=base_quotation.quotation_number + '.'
                     ).order_by('-quotation_number')
-            
+
                     highest_revision = 0
                     for revision in all_revisions:
                         try:
@@ -155,11 +315,11 @@ class CreateQuotationView(APIView):
                             highest_revision = max(highest_revision, revision_num)
                         except (ValueError, IndexError):
                             continue
-            
+
                     next_revision = highest_revision + 1
                     data["quotation_number"] = f"{base_quotation.quotation_number}.{next_revision}"
                     original_quotation = base_quotation
-            
+
                 except Quotation.DoesNotExist:
                     return Response(
                         {"error": "Original quotation not found"},
@@ -175,7 +335,7 @@ class CreateQuotationView(APIView):
                     .order_by('-quotation_number')
                     .first()
                 )
-        
+
                 if last_quotation:
                     match = re.search(r'QN-(\d+)-\d+$', last_quotation.quotation_number)
                     if match:
@@ -185,7 +345,7 @@ class CreateQuotationView(APIView):
                         next_number = 1
                 else:
                     next_number = 1
-        
+
                 data["quotation_number"] = f"QN-{next_number:03d}-{current_year}"
                 original_quotation = None
 
@@ -214,7 +374,7 @@ class CreateQuotationView(APIView):
                 },
                 status=status.HTTP_201_CREATED,
             )
- 
+
     def get(self, request, quotation_id=None):
         if quotation_id:
             try:
@@ -225,10 +385,13 @@ class CreateQuotationView(APIView):
                     {"error": "Quotation not found"},
                     status=status.HTTP_404_NOT_FOUND,
                 )
- 
+
         quotations = Quotation.objects.all()
         return Response(QuotationSerializer(quotations, many=True).data)
- 
+
+
+
+
 class NumberingSystemSettingsAPI(APIView):
     queryset = NumberingSystemSettings.objects.all()
  
@@ -549,3 +712,15 @@ class CreateRevisedQuotationAPI(APIView):
             "tax": tax,
             "status": quotation_status,
         }, status=status.HTTP_201_CREATED)
+
+
+
+
+from part.serializers import PartSerializer
+
+class PartAPIView(APIView):
+    def get(self, request):
+        parts = Part.objects.all()
+        serializer = PartSerializer(parts, many=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+    

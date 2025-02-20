@@ -97,3 +97,11 @@ class LeadToInvoiceSerializer(serializers.ModelSerializer):
         if not data.get('quotation') and not data.get('invoice'):
             raise serializers.ValidationError("Either Quotation or Invoice must be provided.")
         return data
+
+
+from part.models import Part
+
+class PartSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Part
+        fields = ['id', 'name']  # Include only the fields you need

@@ -263,3 +263,18 @@ export function PaidStatusFilter(): TableFilter {
     ]
   };
 }
+
+export function QuotationStatusFilter(): TableFilter {
+  return {
+    name: 'quotation_status',
+    label: t`Quotation Status`,
+    description: t`Filter by quotation status`,
+    type: 'choice',
+    choices: [
+      { value: 'sent', label: t`Sent` },
+      { value: 'accepted', label: t`Accepted` },
+      { value: 'rejected', label: t`Rejected` },
+      { value: 'draft', label: t`Draft` }
+    ]
+  };
+}

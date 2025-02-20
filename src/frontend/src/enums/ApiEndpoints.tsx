@@ -229,5 +229,7 @@ export enum ApiEndpoints {
   // Lead to Invoice API endpoints
   invoices = `${BASE_URL}invoices/`,
   leads = `${BASE_URL}leads/`,
-  quotations= `${BASE_URL}quotations/`
+  quotations= `${BASE_URL}quotations/`,
+  parts= `${BASE_URL}parts/`
+
 }

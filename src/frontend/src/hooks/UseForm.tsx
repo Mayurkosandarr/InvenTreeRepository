@@ -147,3 +147,17 @@ export function useCreateInvoiceFormModal(props: ApiFormModalProps) {
  
   return useApiFormModal(invoiceProps);
 }
+
+export function useCreateQuotationFormModal(props: ApiFormModalProps) {
+  const quotationProps = useMemo<ApiFormModalProps>(
+    () => ({
+      ...props,
+      fetchInitialData: props.fetchInitialData ?? false,
+      successMessage: props.successMessage ?? t`Quotation Created`,
+      method: 'POST'
+    }),
+    [props]
+  );
+
+  return useApiFormModal(quotationProps);
+}

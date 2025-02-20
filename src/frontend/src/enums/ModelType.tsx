@@ -35,5 +35,7 @@ export enum ModelType {
   contenttype = 'contenttype',
   selectionlist = 'selectionlist',
   error = 'error',
-  invoice = "invoice"
+  invoice = "invoice",
+  quotation = "quotation",
+  parts = "parts"
 }

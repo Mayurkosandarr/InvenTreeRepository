@@ -166,6 +166,21 @@ function NavTabs() {
       );
     });
 
+
+    
+        // Add the Quotation tab
+        _tabs.push(
+          <Tabs.Tab
+            value="quotation"
+            key="quotation"
+            onClick={(event: any) =>
+              navigateToLink('/quotation', navigate, event)
+            }
+          >
+            Quotation
+          </Tabs.Tab>
+        );
+
     // Add the Invoice tab
     _tabs.push(
       <Tabs.Tab

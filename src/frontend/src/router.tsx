@@ -185,6 +185,7 @@ import { Navigate, Route, Routes } from 'react-router-dom';
 
 import { Loadable } from './functions/loading';
 import InvoiceIndex from './components/nav/InvoiceDetail';
+import QuotationIndex from './components/nav/QuotationDetail';
 
 // Lazy loaded pages
 export const LayoutComponent = Loadable(
@@ -353,6 +354,14 @@ export const routes = (
         <Route path='return-order/:id/*' element={<ReturnOrderDetail />} />
         <Route path='customer/:id/*' element={<CustomerDetail />} />
       </Route>
+
+      {/* Add the Quotation route */}
+      <Route path='quotation/'>
+        <Route index element={<Navigate to='index/' />} />
+        <Route path='index/*' element={<QuotationIndex />} />
+      </Route>
+
+
       {/* Add the Invoice route */}
       <Route path='invoice/'>
         <Route index element={<Navigate to='index/' />} />
