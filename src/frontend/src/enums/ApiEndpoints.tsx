@@ -227,9 +227,16 @@ export enum ApiEndpoints {
   // invoice_list = '/lead_to_invoice/invoices/'
 
   // Lead to Invoice API endpoints
+  // biome-ignore lint/style/useLiteralEnumMembers: <explanation>
   invoices = `${BASE_URL}invoices/`,
+
+  // biome-ignore lint/style/useLiteralEnumMembers: <explanation>
   leads = `${BASE_URL}leads/`,
+
+  // biome-ignore lint/style/useLiteralEnumMembers: <explanation>
   quotations= `${BASE_URL}quotations/`,
+  
+  // biome-ignore lint/style/useLiteralEnumMembers: <explanation>
   parts= `${BASE_URL}parts/`
 
 }

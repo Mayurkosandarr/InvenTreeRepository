@@ -230,7 +230,6 @@ class CreateLeadView(APIView):
 #         return Response(QuotationSerializer(quotations, many=True).data)
  
 
-
 class CreateQuotationView(APIView):
     def post(self, request):
         data = request.data
@@ -243,32 +242,39 @@ class CreateQuotationView(APIView):
                 {"error": "Lead not found"}, status=status.HTTP_400_BAD_REQUEST
             )
 
-        items = data.get("items")
-        if not isinstance(items, list) or not items:
+        parts = data.get("parts")
+        if not isinstance(parts, list) or not parts:
             return Response(
-                {"error": "Items must be a non-empty list"},
+                {"error": "Parts must be a non-empty list"},
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
-        items.sort(key=lambda x: x.get("item_name", ""))
-        for item in items:
-            item_name = item.get("item_name")
-            if not item_name:
+        parts.sort(key=lambda x: x.get("part_name", ""))
+        for part in parts:
+            part_name = part.get("part_name")
+            if not part_name:
                 return Response(
-                    {"error": "Each item must have an item_name"},
+                    {"error": "Each part must have a part_name"},
                     status=status.HTTP_400_BAD_REQUEST,
                 )
 
             try:
-                part = Part.objects.get(name=item_name)
+                part_obj = Part.objects.get(name=part_name)
             except Part.DoesNotExist:
                 return Response(
-                    {"error": f"Part with name {item_name} not found"},
+                    {"error": f"Part with name {part_name} not found"},
                     status=status.HTTP_400_BAD_REQUEST,
                 )
 
-            item["part_id"] = part.id
-            item["price"] = part.price  # Fetch the price from the part model
+            part["part_name"] = part_obj.name
+            price_range = part_obj.get_price_range(quantity=1)
+            
+            if price_range is None:
+                return Response(
+                    {"error": f"No price available for part {part_name}"},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
+            part["price"] = price_range[0]  # Fetch the minimum price using get_price_range
 
         discount = data.get("discount", 0)
         tax = data.get("tax", 0)
@@ -283,13 +289,13 @@ class CreateQuotationView(APIView):
             )
 
         total_amount = 0
-        for item in items:
+        for part in parts:
             try:
-                item["total"] = item["quantity"] * item["price"]
-                total_amount += item["total"]
+                part["total"] = part["quantity"] * part["price"]
+                total_amount += part["total"]
             except KeyError:
                 return Response(
-                    {"error": "Each item must have quantity and price"},
+                    {"error": "Each part must have quantity and price"},
                     status=status.HTTP_400_BAD_REQUEST,
                 )
 
@@ -352,7 +358,7 @@ class CreateQuotationView(APIView):
             quotation = Quotation.objects.create(
                 lead=lead,
                 quotation_number=data["quotation_number"],
-                items=items,
+                parts=parts,
                 total_amount=total_amount,
                 discount=discount,
                 tax=tax,
@@ -365,7 +371,7 @@ class CreateQuotationView(APIView):
                     "message": "Quotation created!",
                     "quotation_id": quotation.id,
                     "quotation_number": quotation.quotation_number,
-                    "items": quotation.items,
+                    "parts": quotation.parts,
                     "discount": f"{int(quotation.discount)}%",
                     "tax": f"{int(quotation.tax)}%",
                     "total_amount": quotation.total_amount,
@@ -388,8 +394,6 @@ class CreateQuotationView(APIView):
 
         quotations = Quotation.objects.all()
         return Response(QuotationSerializer(quotations, many=True).data)
-
-
 
 
 class NumberingSystemSettingsAPI(APIView):

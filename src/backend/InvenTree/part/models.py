@@ -2113,6 +2113,13 @@ class Part(
             self.get_bom_price_range(quantity, internal=internal) if bom else None
         )
 
+        if buy_price_range is None and bom_price_range is None:
+            # If no other prices are available, use base_cost
+            if self.base_cost:
+                return float(self.base_cost), float(self.base_cost)
+            else:
+                return None
+
         if buy_price_range is None:
             return bom_price_range
 

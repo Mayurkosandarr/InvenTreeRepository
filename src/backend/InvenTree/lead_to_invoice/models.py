@@ -119,7 +119,7 @@ class Quotation(models.Model):
         "self", null=True, blank=True, on_delete=models.SET_NULL, related_name="revisions"
     )
     revision_count = models.PositiveIntegerField(default=0)  
-    items = models.JSONField(default=list)
+    parts = models.JSONField(default=list)
     total_amount = models.DecimalField(max_digits=10, decimal_places=2)
     discount = models.DecimalField(max_digits=5, decimal_places=2, null=True, blank=True)
     tax = models.DecimalField(max_digits=5, decimal_places=2, null=True, blank=True)

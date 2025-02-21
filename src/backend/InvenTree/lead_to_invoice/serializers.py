@@ -102,6 +102,14 @@ class LeadToInvoiceSerializer(serializers.ModelSerializer):
 from part.models import Part
 
 class PartSerializer(serializers.ModelSerializer):
+    price = serializers.SerializerMethodField()
+
     class Meta:
         model = Part
-        fields = ['id', 'name']  # Include only the fields you need
+        fields = ['name', 'price']  
+
+    def get_price(self, obj):
+        if isinstance(obj, Part):  # Ensure obj is a Part instance
+            price_range = obj.get_price_range()
+            return price_range[0] if price_range else obj.base_cost
+        return None  # Handle cases where obj isn't a Part instance

@@ -409,8 +409,6 @@
 
 // export default Quotation;
 
-
-
 import { useState, useEffect } from 'react';
 import { FiX } from "react-icons/fi"; // X for cancel
 import { t } from '@lingui/macro';
@@ -420,7 +418,7 @@ import { ApiEndpoints } from '../../enums/ApiEndpoints';
 
 const Quotation = ({ onClose }: { onClose: () => void }) => {
   const [leadId, setLeadId] = useState('');
-  const [items, setItems] = useState<{ id: number; name: string; price: number; tax: number; quantity: number }[]>([]);
+  const [parts, setParts] = useState<{ id: number; name: string; price: number; quantity: number; total: number }[]>([]);
   const [discount, setDiscount] = useState('');
   const [tax, setTax] = useState('');
   const [status, setStatus] = useState('draft');
@@ -436,16 +434,15 @@ const Quotation = ({ onClose }: { onClose: () => void }) => {
     id: number;
     name: string;
     price: number;
-    tax: number;
   }
 
   const [leads, setLeads] = useState<Lead[]>([]);
-  const [parts, setParts] = useState<Part[]>([]);
+  const [availableParts, setAvailableParts] = useState<Part[]>([]);
 
   useEffect(() => {
     document.title = 'Quotation';
     fetchLeads();
-    fetchParts();
+    fetchAvailableParts();
   }, []);
 
   const fetchLeads = async () => {
@@ -462,12 +459,12 @@ const Quotation = ({ onClose }: { onClose: () => void }) => {
     }
   };
 
-  const fetchParts = async () => {
+  const fetchAvailableParts = async () => {
     try {
       const response = await fetch(ApiEndpoints.parts);
       const result = await response.json();
       if (response.ok) {
-        setParts(result);
+        setAvailableParts(result);
       } else {
         console.error('Failed to fetch parts:', result.error);
       }
@@ -480,25 +477,92 @@ const Quotation = ({ onClose }: { onClose: () => void }) => {
     setLeadId(selectedOption ? selectedOption.value : '');
   };
 
-  const handleItemChange = (selectedOptions: any) => {
-    setItems(selectedOptions ? selectedOptions.map((option: any) => {
-      const part = parts.find(p => p.id === option.value);
-      return { id: option.value, name: option.label, price: part?.price || 0, tax: part?.tax || 0, quantity: 1 };
-    }) : []);
+  // const handlePartChange = (selectedOptions: any) => {
+  //   const newParts = selectedOptions.map((option: any) => {
+  //     const partDetails = availableParts.find(part => part.id === option.value);
+  //     const quantity = 1; // Default quantity to 1
+  //     const total = (partDetails?.price || 0) * quantity;
+  //     return {
+  //       id: option.value,
+  //       name: option.label,
+  //       price: partDetails?.price || 0,
+  //       quantity,
+  //       total
+  //     };
+  //   });
+  
+  //   setParts(newParts);
+  // };
+  
+
+  const handlePartChange = (selectedOptions: any) => {
+    const newParts = selectedOptions.map((option: any) => {
+      const partDetails = availableParts.find(part => part.id === option.value);
+      return { 
+        id: option.value, 
+        name: option.label, 
+        price: partDetails?.price || 0, 
+        quantity: 1, 
+        total: partDetails?.price || 0 // Ensure total is set initially
+      };
+    });
+    setParts(newParts);
+    updateTotalAmount(newParts); // Pass the updated parts
   };
 
+  
   const handleQuantityChange = (index: number, quantity: number) => {
-    const newItems = [...items];
-    newItems[index].quantity = quantity;
-    setItems(newItems);
+    const newParts = [...parts];
+    newParts[index].quantity = quantity;
+    newParts[index].total = newParts[index].price * quantity;
+    setParts(newParts);
+    updateTotalAmount();
   };
 
+  const handleDiscountChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setDiscount(e.target.value);
+    updateTotalAmount();
+  };
+
+  const handleTaxChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setTax(e.target.value);
+    updateTotalAmount();
+  };
+
+  // const updateTotalAmount = (newParts: any) => {
+  //   const discountValue = Number.parseFloat(discount) || 0;
+  //   const taxValue = Number.parseFloat(tax) || 0;
+
+  //   const newParts = parts.map(part => {
+  //     const total = part.price * part.quantity;
+  //     const discountedTotal = total - (total * (discountValue / 100));
+  //     const taxedTotal = discountedTotal + (discountedTotal * (taxValue / 100));
+  //     return { ...part, total: taxedTotal };
+  //   });
+
+  //   setParts(newParts);
+  // };
+
+  const updateTotalAmount = (updatedParts = parts) => {
+    const discountValue = Number.parseFloat(discount) || 0;
+    const taxValue = Number.parseFloat(tax) || 0;
+  
+    const newParts = updatedParts.map(part => {
+      const total = part.price * part.quantity;
+      const discountedTotal = total - (total * (discountValue / 100));
+      const taxedTotal = discountedTotal + (discountedTotal * (taxValue / 100));
+      return { ...part, total: taxedTotal };
+    });
+  
+    setParts(newParts);
+  };
+  
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
 
     const data = {
       lead_id: leadId,
-      items: items.map(item => ({ item_name: item.name, price: item.price, tax: item.tax, quantity: item.quantity })),
+      parts: parts.map(part => ({ part_name: part.name, quantity: part.quantity, price: part.price, total: part.total })),
       discount,
       tax,
       status,
@@ -517,6 +581,7 @@ const Quotation = ({ onClose }: { onClose: () => void }) => {
       const result = await response.json();
       if (response.ok) {
         setResponseMessage(result.message || 'Quotation created successfully!');
+        setParts(result.parts); // Update parts with the response data
         onClose(); // Close the form after submission
       } else {
         setResponseMessage(result.error || 'An error occurred.');
@@ -534,7 +599,7 @@ const Quotation = ({ onClose }: { onClose: () => void }) => {
     label: `${lead.id} - ${lead.name}`
   }));
 
-  const partOptions = parts.map((part) => ({
+  const partOptions = availableParts.map((part) => ({
     value: part.id,
     label: part.name
   }));
@@ -563,24 +628,24 @@ const Quotation = ({ onClose }: { onClose: () => void }) => {
           <div className="form-group">
             {/* biome-ignore lint/a11y/noLabelWithoutControl: <explanation> */}
 <label>
-              {t`Items`}:
+              {t`Parts`}:
               <Select
                 isMulti
-                value={items.map(item => ({ value: item.id, label: item.name }))}
-                onChange={handleItemChange}
+                value={parts.map(part => ({ value: part.id, label: part.name }))}
+                onChange={handlePartChange}
                 options={partOptions}
                 isClearable
-                placeholder={t`Select Items`}
+                placeholder={t`Select Parts`}
               />
             </label>
           </div>
-          {items.map((item, index) => (
-            <div key={item.id} className="form-group">
+          {parts.map((part, index) => (
+            <div key={part.id} className="form-group">
               <label>
                 {t`Quantity`}:
                 <input
                   type="number"
-                  value={item.quantity}
+                  value={part.quantity}
                   onChange={(e) => handleQuantityChange(index, Number(e.target.value))}
                   required
                 />
@@ -593,7 +658,7 @@ const Quotation = ({ onClose }: { onClose: () => void }) => {
               <input
                 type="number"
                 value={discount}
-                onChange={(e) => setDiscount(e.target.value)}
+                onChange={handleDiscountChange}
                 required
               />
             </label>
@@ -604,7 +669,7 @@ const Quotation = ({ onClose }: { onClose: () => void }) => {
               <input
                 type="number"
                 value={tax}
-                onChange={(e) => setTax(e.target.value)}
+                onChange={handleTaxChange}
                 required
               />
             </label>
@@ -631,17 +696,17 @@ const Quotation = ({ onClose }: { onClose: () => void }) => {
               <tr>
                 <th>{t`Name`}</th>
                 <th>{t`Price`}</th>
-                <th>{t`Tax`}</th>
                 <th>{t`Quantity`}</th>
+                <th>{t`Total`}</th>
               </tr>
             </thead>
             <tbody>
-              {items.map(item => (
-                <tr key={item.id}>
-                  <td>{item.name}</td>
-                  <td>{item.price}</td>
-                  <td>{item.tax}</td>
-                  <td>{item.quantity}</td>
+              {parts.map(part => (
+                <tr key={part.id}>
+                  <td>{part.name}</td>
+                  <td>{part.price}</td>
+                  <td>{part.quantity}</td>
+                  <td>{part.total.toFixed(2)}</td>
                 </tr>
               ))}
             </tbody>
