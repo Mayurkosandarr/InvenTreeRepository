@@ -8,7 +8,7 @@
   display: flex;
   justify-content: center;
   align-items: center;
-  overflow: auto; /* Allow scrolling if content is too large */
+  overflow: auto !important; /* Allow scrolling if content is too large */
   padding: 20px; /* Prevent form from cutting off */
 }
 
@@ -40,7 +40,7 @@
   font-size: 16px;
 }
 
-.close-form-button {
+.close-form-button {  
   position: absolute;
   top: 10px;
   right: 10px;
@@ -64,22 +64,59 @@
 }
 
 .table-container {
-  margin-top: 50px;
+  margin-top: 20px;
+  margin-bottom: 20px;
   border: 1px solid #ddd;
   border-radius: 8px;
-  overflow: hidden;
+  width: 100%;
+  flex: 1; /* This will make the table container take all remaining space */
+  display: flex;
+  flex-direction: column;
+    /* Remove overflow: hidden from container to avoid cutting off the scrollbar */
+}
+
+.table-wrapper {
+  
+  max-height: none; /* Reduced height to ensure scrolling is needed */
+  overflow-y: auto !important; /* Force vertical scrolling */
+  overflow-x: hidden; /* Prevent horizontal scrolling */
   width: 100%;
 }
 
-.table-container table {
+/* Ensure the table takes up full width */
+.table-wrapper table {
   width: 100%;
   border-collapse: collapse;
+  table-layout: fixed; /* Helps maintain column widths */
 }
 
-.table-container th, .table-container td {
+/* Make headers sticky */
+.table-wrapper thead {
+  position: sticky;
+  top: 0;
+  background-color: white; /* Match your design background */
+  z-index: 2; /* Ensure headers appear above content when scrolling */
+}
+
+.table-wrapper th {
+  padding: 12px;
+  text-align: left;
+  border-bottom: 2px solid #ddd; /* Stronger border for headers */
+  background-color: #f8f8f8; /* Light background for headers */
+}
+
+.table-wrapper td {
   padding: 12px;
   text-align: left;
   border-bottom: 1px solid #ddd;
+  vertical-align: middle; /* Center content vertically */
+}
+
+/* Add padding at the bottom of the table to ensure last row is fully visible */
+.table-wrapper tbody::after {
+  content: "";
+  display: block;
+  height: 10px; /* Add some space after the last row */
 }
 
 .quotation-form-container input[type="text"],
@@ -102,9 +139,9 @@
 }
 
 .quotation-form-container button {
-  background-color: #4caf50;
-  color: white;
-  padding: 10px 20px;
+  background-color: #4caf50 !important;
+  color: white !important;
+  padding: 10px 20px !important;
   border: none;
   border-radius: 8px; /* Border radius for buttons */
   cursor: pointer;
@@ -112,14 +149,34 @@
   margin-top: 15px;
 }
 
-.quotation-form-container button:hover {
-  background-color: #45a049; /* Hover effect for buttons */
+.quantity-button {
+  width: 30px; /* Make them smaller */
+  height: 35px;
+  font-size: 30px;
+  background-color: #4caf50;
+  color: black;
+  border: none;
+  border-radius: 50%;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 15px;
+  font-size: 25px;
+
+  transition: background-color 0.3s ease, box-shadow 0.3s ease;
+}
+
+
+.quantity-button:hover {
+  background-color: #45a049;
   box-shadow: 0 4px 8px rgba(76, 175, 80, 0.5);
 }
 
-.table-wrapper {
-  border-radius: 10px;
-  overflow: hidden;
+.quantity-control {
+  display: flex;
+  align-items: center;
+  gap: 25px; /* Space between - button, number, and + button */
 }
 
 table {
@@ -151,7 +208,7 @@ tr:last-child td:last-child {
 
 .loader-container {
   position: absolute;
-  top: 19%; /* Changed from 50% to 60% to move it lower */
+  top: 50%; /* Adjusted to center properly */
   left: 50%;
   transform: translate(-50%, -50%);
   z-index: 1000;

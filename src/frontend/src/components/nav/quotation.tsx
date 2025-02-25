@@ -419,6 +419,7 @@ import { ApiEndpoints } from '../../enums/ApiEndpoints';
 const Quotation = ({ onClose }: { onClose: () => void }) => {
   const [leadId, setLeadId] = useState('');
   const [parts, setParts] = useState<{ id: number; name: string; price: number; quantity: number; total: number }[]>([]);
+  const [selectedPart, setSelectedPart] = useState<{ value: number; label: string } | null>(null);
   const [discount, setDiscount] = useState('');
   const [tax, setTax] = useState('');
   const [status, setStatus] = useState('draft');
@@ -477,61 +478,175 @@ const Quotation = ({ onClose }: { onClose: () => void }) => {
     setLeadId(selectedOption ? selectedOption.value : '');
   };
 
-  // const handlePartChange = (selectedOptions: any) => {
-  //   const newParts = selectedOptions.map((option: any) => {
-  //     const partDetails = availableParts.find(part => part.id === option.value);
-  //     const quantity = 1; // Default quantity to 1
-  //     const total = (partDetails?.price || 0) * quantity;
-  //     return {
-  //       id: option.value,
-  //       name: option.label,
-  //       price: partDetails?.price || 0,
-  //       quantity,
-  //       total
-  //     };
-  //   });
-  
-  //   setParts(newParts);
-  // };
-  
+
 
   // const handlePartChange = (selectedOptions: any) => {
+  //   console.log("Selected Options:", selectedOptions);
+  //   console.log("Available Parts:", availableParts);
+  
   //   const newParts = selectedOptions.map((option: any) => {
-  //     const partDetails = availableParts.find(part => part.id === option.value);
+  //     const partDetails = availableParts.find(part => part.name === option.label); 
+  
+  //     console.log("Matching Part Details:", partDetails);
+  
   //     return { 
-  //       id: option.value, 
+  //       id: option.value,  
   //       name: option.label, 
-  //       price: partDetails?.price || 0, 
+  //       price: partDetails ? partDetails.price : 0,  
   //       quantity: 1, 
-  //       total: partDetails?.price || 0 // Ensure total is set initially
+  //       total: partDetails ? partDetails.price : 0  
   //     };
   //   });
+  
   //   setParts(newParts);
-  //   updateTotalAmount(newParts); // Pass the updated parts
+  //   updateTotalAmount(newParts);
   // };
 
 
-  const handlePartChange = (selectedOptions: any) => {
-    console.log("Selected Options:", selectedOptions);
-    console.log("Available Parts:", availableParts);
+  // const handlePartChange = (selectedOption: any) => {
+  //   // Return early if nothing is selected
+  //   if (!selectedOption) return;
+    
+  //   // Find the part details for the selected option
+  //   const partDetails = availableParts.find(part => part.id === selectedOption.value);
+    
+  //   // Create the new part object
+  //   const newPart = {
+  //     id: selectedOption.value,
+  //     name: selectedOption.label,
+  //     price: partDetails ? partDetails.price : 0,
+  //     quantity: 1,
+  //     total: partDetails ? partDetails.price : 0
+  //   };
+    
+  //   // Add this new part to the existing parts array
+  //   const updatedParts = [...parts, newPart];
+    
+  //   // Update state
+  //   setParts(updatedParts);
+  //   updateTotalAmount(updatedParts);
+    
+  //   // Reset the select input by setting its value to null
+  //   // You'll need to track this in a separate state
+  //   setSelectedPart(null);
+  // };
   
-    const newParts = selectedOptions.map((option: any) => {
-      const partDetails = availableParts.find(part => part.name === option.label); 
+  // const handlePartChange = (selectedOption: any) => {
+  //   if (!selectedOption) return;
+    
+  //   const partDetails = availableParts.find(part => part.name === selectedOption.label);
+    
+  //   // Check if this part is already in the parts array using name
+  //   const existingPartIndex = parts.findIndex(part => part.name === selectedOption.label);
+    
+  //   let updatedParts;
+    
+  //   if (existingPartIndex >= 0) {
+  //     // Part already exists, increase its quantity by 1
+  //     updatedParts = [...parts];
+  //     updatedParts[existingPartIndex].quantity += 1;
+  //     updatedParts[existingPartIndex].total = updatedParts[existingPartIndex].quantity * updatedParts[existingPartIndex].price;
+  //   } else {
+  //     // Part doesn't exist, add it with quantity 1
+  //     const newPart = {
+  //       id: selectedOption.value,
+  //       name: selectedOption.label, // Using the name from the selection
+  //       price: partDetails ? partDetails.price : 0,
+  //       quantity: 1,
+  //       total: partDetails ? partDetails.price : 0
+  //     };
+  //     updatedParts = [...parts, newPart];
+  //   }
+    
+  //   setParts(updatedParts);
+  //   updateTotalAmount(updatedParts);
+  //   setSelectedPart(null);
+  // };
   
-      console.log("Matching Part Details:", partDetails);
-  
-      return { 
-        id: option.value,  
-        name: option.label, 
-        price: partDetails ? partDetails.price : 0,  
-        quantity: 1, 
-        total: partDetails ? partDetails.price : 0  
-      };
+  const handlePartChange = (selectedOption: any) => {
+    if (!selectedOption) return;
+
+    console.log("Selected Option:", selectedOption);
+    console.log("Available Parts Before Filtering:", availableParts);
+
+    // Find the selected part details
+    const partDetails = availableParts.find(part => part.name === selectedOption.label);
+
+    console.log("Matching Part Details:", partDetails);
+
+    if (!partDetails) return;
+
+    // Create the new part object
+    const newPart = {
+        id: selectedOption.value,
+        name: selectedOption.label,
+        price: partDetails.price,
+        quantity: 1,
+        total: partDetails.price
+    };
+
+    // Update the selected parts list
+    setParts(prevParts => [...prevParts, newPart]);
+
+    // // Filter out the selected part from the available parts list
+    // const updatedAvailableParts = availableParts.filter(part => part.name !== selectedOption.label);
+    // setAvailableParts(updatedAvailableParts);
+
+    // Reset the search field (if needed)
+    setSelectedPart(null); // Assuming you have state to control selected option
+
+    updateTotalAmount([...parts, newPart]);
+};
+
+
+
+  // Update quantity control functions to use name instead of ID
+  const increaseQuantity = (partName: string) => {
+    const updatedParts = parts.map(part => {
+      if (part.name === partName) {
+        const newQuantity = part.quantity + 1;
+        return {
+          ...part,
+          quantity: newQuantity,
+          total: newQuantity * part.price
+        };
+      }
+      return part;
     });
-  
-    setParts(newParts);
-    updateTotalAmount(newParts);
+    
+    setParts(updatedParts);
+    updateTotalAmount(updatedParts);
   };
+  
+  const decreaseQuantity = (part_name: string) => {
+    const updatedParts = parts.map(part => {
+      if (part.name === part_name) {
+        const newQuantity = Math.max(0, part.quantity - 1);
+        return {
+          ...part,
+          quantity: newQuantity,
+          total: newQuantity * part.price
+        };
+      }
+      return part;
+    });
+    
+    // Filter out parts with quantity 0
+    const filteredParts = updatedParts.filter(part => part.quantity > 0);
+    
+    setParts(filteredParts);
+    updateTotalAmount(filteredParts);
+  };
+  
+  const removePart = (part_name: string) => {
+    const updatedParts = parts.filter(part => part.name !== part_name);
+    setParts(updatedParts);
+    updateTotalAmount(updatedParts);
+  };
+
+
+
+  
   
   const handleQuantityChange = (index: number, quantity: number) => {
     const newParts = [...parts];
@@ -551,33 +666,7 @@ const Quotation = ({ onClose }: { onClose: () => void }) => {
     updateTotalAmount();
   };
 
-  // const updateTotalAmount = (newParts: any) => {
-  //   const discountValue = Number.parseFloat(discount) || 0;
-  //   const taxValue = Number.parseFloat(tax) || 0;
 
-  //   const newParts = parts.map(part => {
-  //     const total = part.price * part.quantity;
-  //     const discountedTotal = total - (total * (discountValue / 100));
-  //     const taxedTotal = discountedTotal + (discountedTotal * (taxValue / 100));
-  //     return { ...part, total: taxedTotal };
-  //   });
-
-  //   setParts(newParts);
-  // };
-
-  // const updateTotalAmount = (updatedParts = parts) => {
-  //   const discountValue = Number.parseFloat(discount) || 0;
-  //   const taxValue = Number.parseFloat(tax) || 0;
-  
-  //   const newParts = updatedParts.map(part => {
-  //     const total = part.price * part.quantity;
-  //     const discountedTotal = total - (total * (discountValue / 100));
-  //     const taxedTotal = discountedTotal + (discountedTotal * (taxValue / 100));
-  //     return { ...part, total: taxedTotal };
-  //   });
-  
-  //   setParts(newParts);
-  // };
 
 
   const updateTotalAmount = (updatedParts = parts) => {
@@ -652,7 +741,7 @@ const Quotation = ({ onClose }: { onClose: () => void }) => {
   return (
     <div className="quotation-form-overlay">
       <div className="quotation-form-container">
-        <button type="button" className="close-form-button" onClick={onClose}>
+        <button id='abc' type="button" className="close-form-button" onClick={onClose}>
           <FiX />
         </button>
         <h2>{t`Create Quotation`}</h2>
@@ -673,30 +762,17 @@ const Quotation = ({ onClose }: { onClose: () => void }) => {
           <div className="form-group">
             {/* biome-ignore lint/a11y/noLabelWithoutControl: <explanation> */}
 <label>
-              {t`Parts`}:
-              <Select
-                isMulti
-                value={parts.map(part => ({ value: part.id, label: part.name }))}
-                onChange={handlePartChange}
-                options={partOptions}
-                isClearable
-                placeholder={t`Select Parts`}
-              />
+{t`Parts`}:
+<Select
+  value={selectedPart}
+  onChange={handlePartChange}
+  options={partOptions}
+  isClearable
+  placeholder={t`Select Parts`}
+/>
             </label>
           </div>
-          {parts.map((part, index) => (
-            <div key={part.id} className="form-group">
-              <label>
-                {t`Quantity`}:
-                <input
-                  type="number"
-                  value={part.quantity}
-                  onChange={(e) => handleQuantityChange(index, Number(e.target.value))}
-                  required
-                />
-              </label>
-            </div>
-          ))}
+
           <div className="form-group">
             <label>
               {t`Discount`}:
@@ -736,6 +812,8 @@ const Quotation = ({ onClose }: { onClose: () => void }) => {
         </form>
         {responseMessage && <p>{responseMessage}</p>}
         <div className="table-container">
+        <div className="table-wrapper">
+
           <table>
             <thead>
               <tr>
@@ -743,23 +821,35 @@ const Quotation = ({ onClose }: { onClose: () => void }) => {
                 <th>{t`Price`}</th>
                 <th>{t`Quantity`}</th>
                 <th>{t`Total`}</th>
+                <th>{t`Action`}</th>
+
               </tr>
             </thead>
             <tbody>
               {parts.map(part => (
-                <tr key={part.id}>
+                <tr key={part.id || part.name}>
                   <td>{part.name}</td>
-                  <td>{part.price}</td>
-                  <td>{part.quantity}</td>
+                  <td>{part.price.toFixed(2)}</td>
+                  <td>
+                    <div className="quantity-control">
+                    <button className="quantity-button" onClick={() => decreaseQuantity(part.name)}>-</button>
+                    <span>{part.quantity}</span>
+                    <button className="quantity-button" onClick={() => increaseQuantity(part.name)}>+</button>
+                    </div>
+                  </td>
                   <td>{part.total.toFixed(2)}</td>
+                  <td>
+                  <button className="delete-button" onClick={() => removePart(part.name)}>Delete</button>
+                  </td>
                 </tr>
               ))}
             </tbody>
           </table>
         </div>
       </div>
+      </div>
     </div>
-  );
-};
+    );
+  };
 
 export default Quotation;
