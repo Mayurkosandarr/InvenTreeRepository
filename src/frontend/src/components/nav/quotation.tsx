@@ -495,21 +495,43 @@ const Quotation = ({ onClose }: { onClose: () => void }) => {
   // };
   
 
+  // const handlePartChange = (selectedOptions: any) => {
+  //   const newParts = selectedOptions.map((option: any) => {
+  //     const partDetails = availableParts.find(part => part.id === option.value);
+  //     return { 
+  //       id: option.value, 
+  //       name: option.label, 
+  //       price: partDetails?.price || 0, 
+  //       quantity: 1, 
+  //       total: partDetails?.price || 0 // Ensure total is set initially
+  //     };
+  //   });
+  //   setParts(newParts);
+  //   updateTotalAmount(newParts); // Pass the updated parts
+  // };
+
+
   const handlePartChange = (selectedOptions: any) => {
+    console.log("Selected Options:", selectedOptions);
+    console.log("Available Parts:", availableParts);
+  
     const newParts = selectedOptions.map((option: any) => {
-      const partDetails = availableParts.find(part => part.id === option.value);
+      const partDetails = availableParts.find(part => part.name === option.label); 
+  
+      console.log("Matching Part Details:", partDetails);
+  
       return { 
-        id: option.value, 
+        id: option.value,  
         name: option.label, 
-        price: partDetails?.price || 0, 
+        price: partDetails ? partDetails.price : 0,  
         quantity: 1, 
-        total: partDetails?.price || 0 // Ensure total is set initially
+        total: partDetails ? partDetails.price : 0  
       };
     });
+  
     setParts(newParts);
-    updateTotalAmount(newParts); // Pass the updated parts
+    updateTotalAmount(newParts);
   };
-
   
   const handleQuantityChange = (index: number, quantity: number) => {
     const newParts = [...parts];
@@ -543,20 +565,43 @@ const Quotation = ({ onClose }: { onClose: () => void }) => {
   //   setParts(newParts);
   // };
 
-  const updateTotalAmount = (updatedParts = parts) => {
-    const discountValue = Number.parseFloat(discount) || 0;
-    const taxValue = Number.parseFloat(tax) || 0;
+  // const updateTotalAmount = (updatedParts = parts) => {
+  //   const discountValue = Number.parseFloat(discount) || 0;
+  //   const taxValue = Number.parseFloat(tax) || 0;
   
+  //   const newParts = updatedParts.map(part => {
+  //     const total = part.price * part.quantity;
+  //     const discountedTotal = total - (total * (discountValue / 100));
+  //     const taxedTotal = discountedTotal + (discountedTotal * (taxValue / 100));
+  //     return { ...part, total: taxedTotal };
+  //   });
+  
+  //   setParts(newParts);
+  // };
+
+
+  const updateTotalAmount = (updatedParts = parts) => {
+    // const discountValue = Number.parseFloat(discount) / 100 || 0;
+    // const taxValue = Number.parseFloat(tax) / 100 || 0;
+
+    const discountValue = (Number.parseFloat(discount) || 0) / 100;
+    const taxValue = (Number.parseFloat(tax) || 0) / 100;
+
     const newParts = updatedParts.map(part => {
       const total = part.price * part.quantity;
-      const discountedTotal = total - (total * (discountValue / 100));
-      const taxedTotal = discountedTotal + (discountedTotal * (taxValue / 100));
+      const discountedTotal = discountValue ? total - (total * discountValue) : total;
+      const taxedTotal = discountedTotal + (discountedTotal * taxValue);
       return { ...part, total: taxedTotal };
     });
-  
+
     setParts(newParts);
   };
+
+  useEffect(() => {
+    updateTotalAmount(parts);
+  }, [discount, tax]); // This runs whenever discount or tax changes
   
+
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
 

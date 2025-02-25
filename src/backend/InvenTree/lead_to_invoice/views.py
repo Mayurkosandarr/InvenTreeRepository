@@ -720,7 +720,7 @@ class CreateRevisedQuotationAPI(APIView):
 
 
 
-from part.serializers import PartSerializer
+from lead_to_invoice.serializers import PartSerializer
 
 class PartAPIView(APIView):
     def get(self, request):

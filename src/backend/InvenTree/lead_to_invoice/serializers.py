@@ -26,10 +26,17 @@ class LeadSerializer(serializers.ModelSerializer):
 
 
 class QuotationSerializer(serializers.ModelSerializer):
+    created_at = serializers.SerializerMethodField()
+
     class Meta:
         model = Quotation
         fields = ['id', 'lead', 'quotation_number', 'total_amount', 'status', 'created_at']
 
+    def get_created_at(self, obj):
+        return timezone.localtime(
+                obj.created_at, 
+                pytz.timezone('Asia/Kolkata')
+            ).strftime("%d-%m-%Y")
 
 class InvoiceSerializer(serializers.ModelSerializer):
     quotation_number = serializers.SerializerMethodField()

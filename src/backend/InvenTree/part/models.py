@@ -2132,7 +2132,7 @@ class Part(
 
     base_cost = models.DecimalField(
         max_digits=19,
-        decimal_places=6,
+        decimal_places=1,
         default=0,
         validators=[MinValueValidator(0)],
         verbose_name=_('base cost'),
@@ -3291,7 +3291,7 @@ class PartStocktake(models.Model):
 
     quantity = models.DecimalField(
         max_digits=19,
-        decimal_places=5,
+        decimal_places=1,
         validators=[MinValueValidator(0)],
         verbose_name=_('Quantity'),
         help_text=_('Total available stock at time of stocktake'),
@@ -4280,7 +4280,7 @@ class BomItem(
     quantity = models.DecimalField(
         default=1.0,
         max_digits=15,
-        decimal_places=5,
+        decimal_places=1,
         validators=[MinValueValidator(0)],
         verbose_name=_('Quantity'),
         help_text=_('BOM quantity for this BOM item'),
